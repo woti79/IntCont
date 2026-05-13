@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demografischer Wandel – Interaktives Lernmodul</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#185FA5;--blue-l:#E6F1FB;--blue-m:#B5D4F4;
+  --coral:#D85A30;--coral-l:#FAECE7;
+  --teal:#0F6E56;--teal-l:#E1F5EE;--teal-m:#9FE1CB;
+  --amber:#BA7517;--amber-l:#FAEEDA;
+  --text:#1a1a18;--text2:#5F5E5A;--text3:#888780;
+  --bg:#f7f6f2;--surf:#ffffff;
+  --bdr:rgba(0,0,0,0.1);--bdr2:rgba(0,0,0,0.18);
+  --r:12px;--rs:8px;
+}
+body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+
+/* ── HEADER ── */
+.header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:2.5rem 1.5rem 2rem;text-align:center}
+.mod-tag{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);background:var(--bg);border:1px solid var(--bdr);border-radius:20px;padding:3px 12px;margin-bottom:.8rem}
+.header h1{font-size:1.75rem;font-weight:700;letter-spacing:-.025em;margin-bottom:.4rem}
+.header p{font-size:.9rem;color:var(--text2);max-width:500px;margin:0 auto 1.5rem}
+.steps{display:flex;align-items:center;justify-content:center;gap:0}
+.step{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3)}
+.step-dot{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--bdr2);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text3);flex-shrink:0;transition:all .3s}
+.step-dot.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.step-dot.done{background:var(--teal-l);border-color:var(--teal);color:var(--teal)}
+.step-line{width:48px;height:1px;background:var(--bdr);margin:0 4px}
+
+/* ── SECTIONS ── */
+.section{max-width:740px;margin:0 auto;padding:2.25rem 1.5rem}
+.sec-eyebrow{font-size:10px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:.4rem}
+.sec-title{font-size:1.25rem;font-weight:700;letter-spacing:-.015em;margin-bottom:.5rem}
+.sec-desc{font-size:.875rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.7}
+hr{border:none;border-top:1px solid var(--bdr)}
+
+/* ── CAUSE CARDS ── */
+.causes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:0}
+.c-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:1.1rem;cursor:pointer;transition:all .2s;position:relative;user-select:none}
+.c-card:hover{border-color:var(--bdr2);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.c-card.open{border-color:var(--card-accent)}
+.c-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:.7rem}
+.c-title{font-size:.875rem;font-weight:600;margin-bottom:.3rem;line-height:1.3}
+.c-sub{font-size:.78rem;color:var(--text2);line-height:1.45}
+.c-chevron{position:absolute;top:.9rem;right:.9rem;font-size:13px;color:var(--text3);transition:transform .25s;line-height:1}
+.c-card.open .c-chevron{transform:rotate(180deg)}
+
+.c-detail{background:var(--surf);border-radius:var(--r);padding:1.4rem 1.5rem;margin-top:12px;display:none;border-left:3px solid var(--detail-accent)}
+.c-detail.open{display:block;animation:slideIn .22s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.d-title{font-size:1rem;font-weight:600;color:var(--detail-accent);margin-bottom:.5rem}
+.d-text{font-size:.85rem;color:var(--text2);line-height:1.7;margin-bottom:1rem}
+.d-text strong{color:var(--text);font-weight:600}
+.facts{display:flex;gap:10px;margin-top:.75rem;flex-wrap:wrap}
+.fact{flex:1;min-width:90px;background:var(--fact-bg);border-radius:var(--rs);padding:.75rem .875rem;text-align:center}
+.fact-n{font-size:1.4rem;font-weight:700;color:var(--detail-accent);display:block;line-height:1.1}
+.fact-l{font-size:10px;color:var(--text2);margin-top:3px;line-height:1.3}
+
+/* mini SVG chart wrapper */
+.mini-chart{margin-top:1rem;background:var(--bg);border-radius:var(--rs);padding:.75rem 1rem .5rem;overflow:hidden}
+.mini-chart-label{font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+
+/* ── PYRAMID ── */
+.pyr-controls{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:.875rem}
+.pyr-label-small{font-size:11px;color:var(--text3);margin-right:3px}
+.yr-btn{padding:5px 13px;font-size:12px;border-radius:var(--rs);cursor:pointer;border:1px solid var(--bdr);background:transparent;color:var(--text2);transition:all .15s;font-family:inherit}
+.yr-btn:hover{background:var(--bg);color:var(--text);border-color:var(--bdr2)}
+.yr-btn.active{background:#f0eeea;color:var(--text);border-color:var(--bdr2);font-weight:600}
+.pyr-legend{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text2);margin-bottom:6px;padding:0 2px}
+.ldot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:1.1rem}
+.s-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rs);padding:.875rem 1rem;text-align:center}
+.s-lbl{font-size:11px;color:var(--text2);margin-bottom:3px}
+.s-val{font-size:1.4rem;font-weight:700;color:var(--text);transition:all .25s}
+.s-unit{font-size:10px;color:var(--text3);margin-top:2px}
+.pyr-note{font-size:10px;color:var(--text3);margin-top:.6rem}
+
+/* ── QUIZ ── */
+.q-block{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:1.25rem 1.4rem;margin-bottom:.875rem}
+.q-num{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem}
+.q-text{font-size:.92rem;font-weight:600;line-height:1.5;margin-bottom:.875rem;color:var(--text)}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{padding:10px 14px;border:1px solid var(--bdr);border-radius:var(--rs);cursor:pointer;font-size:.84rem;line-height:1.45;transition:all .15s;background:var(--bg);font-family:inherit;text-align:left;color:var(--text)}
+.opt:hover:not(:disabled){background:#f0eeea;border-color:var(--bdr2)}
+.opt.correct{background:var(--teal-l)!important;border-color:var(--teal)!important;color:var(--teal)!important;font-weight:600}
+.opt.wrong{background:var(--coral-l)!important;border-color:var(--coral)!important;color:var(--coral)!important}
+.opt:disabled{cursor:default}
+.q-fb{margin-top:.75rem;font-size:.8rem;padding:9px 13px;border-radius:var(--rs);line-height:1.55;display:none}
+.q-fb.show{display:block;animation:slideIn .2s}
+.q-fb.ok{background:var(--teal-l);color:var(--teal)}
+.q-fb.err{background:var(--coral-l);color:var(--coral)}
+
+.quiz-result{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:2.5rem 2rem;text-align:center;display:none;margin-top:.5rem}
+.quiz-result.show{display:block;animation:slideIn .3s}
+.qr-score{font-size:3rem;font-weight:800;color:var(--blue);line-height:1}
+.qr-of{font-size:.85rem;color:var(--text2);margin-top:.25rem}
+.qr-msg{font-size:.9rem;color:var(--text2);margin-top:.9rem;line-height:1.65;max-width:440px;margin-left:auto;margin-right:auto}
+.qr-retry{margin-top:1.4rem;padding:10px 28px;font-size:.875rem;background:var(--blue);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;font-family:inherit;font-weight:600;transition:opacity .15s}
+.qr-retry:hover{opacity:.88}
+
+/* ── FOOTER ── */
+.footer{text-align:center;padding:1.25rem 1.5rem;font-size:10px;color:var(--text3);border-top:1px solid var(--bdr);margin-top:.5rem}
+
+@media(max-width:540px){
+  .causes-grid,.stats-row{grid-template-columns:1fr}
+  .header h1{font-size:1.4rem}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="mod-tag">eLearning-Modul</div>
+  <h1>Demografischer Wandel</h1>
+  <p>Erkunde, wie sich die Bevölkerungsstruktur Deutschlands verändert — und warum das für Gesellschaft und Wirtschaft so bedeutsam ist.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-dot active" id="pd1">1</div>
+      <span>Ursachen</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-dot" id="pd2">2</div>
+      <span>Pyramide</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-dot" id="pd3">3</div>
+      <span>Quiz</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 1: URSACHEN-ERKLÄRER         -->
+<!-- ══════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-eyebrow">Schritt 1 — Grundlagen</div>
+  <div class="sec-title">Die drei Treiber des demografischen Wandels</div>
+  <p class="sec-desc">Der demografische Wandel entsteht durch das Zusammenspiel von drei Faktoren. Klicke auf eine Karte, um mehr zu erfahren und konkrete Zahlen zu sehen.</p>
+
+  <div class="causes-grid">
+    <div class="c-card" id="cc-birth" onclick="toggleCause('birth')" style="--card-accent:var(--coral)">
+      <div class="c-icon" style="background:var(--coral-l)">📉</div>
+      <div class="c-title">Sinkende Geburtenrate</div>
+      <div class="c-sub">Weniger Kinder je Frau als zur Bevölkerungsstabilisierung nötig</div>
+      <span class="c-chevron">▾</span>
+    </div>
+    <div class="c-card" id="cc-life" onclick="toggleCause('life')" style="--card-accent:var(--teal)">
+      <div class="c-icon" style="background:var(--teal-l)">📈</div>
+      <div class="c-title">Steigende Lebenserwartung</div>
+      <div class="c-sub">Menschen leben länger dank besserer Medizin und Lebensbedingungen</div>
+      <span class="c-chevron">▾</span>
+    </div>
+    <div class="c-card" id="cc-mig" onclick="toggleCause('mig')" style="--card-accent:var(--blue)">
+      <div class="c-icon" style="background:var(--blue-l)">🌍</div>
+      <div class="c-title">Migration</div>
+      <div class="c-sub">Zuwanderung verlangsamt den Wandel, löst ihn aber nicht vollständig</div>
+      <span class="c-chevron">▾</span>
+    </div>
+  </div>
+
+  <!-- DETAIL: BIRTH -->
+  <div class="c-detail" id="cd-birth" style="--detail-accent:var(--coral);--fact-bg:var(--coral-l);border-color:var(--coral)">
+    <div class="d-title">📉 Sinkende Geburtenrate</div>
+    <div class="d-text">
+      Zur Bestandserhaltung einer Bevölkerung braucht es durchschnittlich <strong>2,1 Kinder je Frau</strong> (Bestandserhaltungsniveau). In Deutschland liegt die Geburtenziffer seit den 1970er-Jahren dauerhaft darunter — heute bei etwa 1,5. Das bedeutet: Jede Generation ist kleiner als die vorherige.
+      <br><br>
+      Diese <em>Fertilitätslücke</em> ist der stärkste einzelne Treiber der Alterung, weil er die Basis der Bevölkerungspyramide direkt verschmälert.
+    </div>
+    <div class="facts">
+      <div class="fact"><span class="fact-n">2,5</span><div class="fact-l">Kinder je Frau<br>um 1960</div></div>
+      <div class="fact"><span class="fact-n">1,5</span><div class="fact-l">Kinder je Frau<br>heute (2023)</div></div>
+      <div class="fact"><span class="fact-n">2,1</span><div class="fact-l">Bestandserhaltungs-<br>niveau</div></div>
+    </div>
+    <div class="mini-chart">
+      <div class="mini-chart-label">Zusammengefasste Geburtenziffer (TFR) · Deutschland</div>
+      <svg viewBox="0 0 460 90" width="100%" style="display:block">
+        <!-- threshold -->
+        <line x1="20" y1="30" x2="440" y2="30" stroke="#D85A30" stroke-width="1" stroke-dasharray="5,4" opacity=".4"/>
+        <text x="442" y="33" font-size="9" fill="#D85A30" opacity=".7">2,1</text>
+        <!-- baseline -->
+        <line x1="20" y1="78" x2="440" y2="78" stroke="#e0ddd6" stroke-width="1"/>
+        <!-- bars: years approx 1955-2023 -->
+        <rect x="28"  y="14" width="34" height="64" rx="3" fill="#D85A30" opacity=".22"/><text x="45"  y="88" font-size="8" fill="#888" text-anchor="middle">1955</text><text x="45"  y="10" font-size="8.5" fill="#D85A30" text-anchor="middle">2,5</text>
+        <rect x="74"  y="14" width="34" height="64" rx="3" fill="#D85A30" opacity=".28"/><text x="91"  y="88" font-size="8" fill="#888" text-anchor="middle">1960</text><text x="91"  y="10" font-size="8.5" fill="#D85A30" text-anchor="middle">2,4</text>
+        <rect x="120" y="20" width="34" height="58" rx="3" fill="#D85A30" opacity=".38"/><text x="137" y="88" font-size="8" fill="#888" text-anchor="middle">1970</text>
+        <rect x="166" y="38" width="34" height="40" rx="3" fill="#D85A30" opacity=".55"/><text x="183" y="88" font-size="8" fill="#888" text-anchor="middle">1980</text>
+        <rect x="212" y="43" width="34" height="35" rx="3" fill="#D85A30" opacity=".65"/><text x="229" y="88" font-size="8" fill="#888" text-anchor="middle">1990</text>
+        <rect x="258" y="41" width="34" height="37" rx="3" fill="#D85A30" opacity=".75"/><text x="275" y="88" font-size="8" fill="#888" text-anchor="middle">2000</text>
+        <rect x="304" y="41" width="34" height="37" rx="3" fill="#D85A30" opacity=".85"/><text x="321" y="88" font-size="8" fill="#888" text-anchor="middle">2010</text>
+        <rect x="350" y="46" width="34" height="32" rx="3" fill="#D85A30"/><text x="367" y="88" font-size="8" fill="#888" text-anchor="middle">2023</text><text x="367" y="42" font-size="8.5" fill="#D85A30" text-anchor="middle">1,5</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- DETAIL: LIFE EXPECTANCY -->
+  <div class="c-detail" id="cd-life" style="--detail-accent:var(--teal);--fact-bg:var(--teal-l);border-color:var(--teal)">
+    <div class="d-title">📈 Steigende Lebenserwartung</div>
+    <div class="d-text">
+      Dank Fortschritten in der Medizin, besserer Ernährung und höherer Lebensqualität leben Menschen in Deutschland heute deutlich länger als noch vor 70 Jahren. Die mittlere Lebenserwartung bei Geburt ist seit 1950 um mehr als <strong>14 Jahre</strong> gestiegen.
+      <br><br>
+      Das ist eine enorme gesellschaftliche Errungenschaft — verändert aber die Altersstruktur grundlegend: Immer mehr Menschen verbringen einen langen Lebensabschnitt im Rentenalter, und der Anteil der über 65-Jährigen steigt stetig.
+    </div>
+    <div class="facts">
+      <div class="fact"><span class="fact-n">67</span><div class="fact-l">Lebenserwartung<br>1950 (Jahre)</div></div>
+      <div class="fact"><span class="fact-n">81</span><div class="fact-l">Lebenserwartung<br>2023 (Jahre)</div></div>
+      <div class="fact"><span class="fact-n">+14</span><div class="fact-l">Gewonnene<br>Lebensjahre</div></div>
+    </div>
+    <div class="mini-chart">
+      <div class="mini-chart-label">Lebenserwartung bei Geburt · Deutschland (Durchschnitt m/w)</div>
+      <svg viewBox="0 0 460 90" width="100%" style="display:block">
+        <line x1="20" y1="78" x2="440" y2="78" stroke="#e0ddd6" stroke-width="1"/>
+        <!-- area fill -->
+        <polygon points="40,65 120,55 200,44 280,33 360,23 440,16 440,78 40,78" fill="#0F6E56" opacity=".08"/>
+        <!-- line -->
+        <polyline points="40,65 120,55 200,44 280,33 360,23 440,16" fill="none" stroke="#0F6E56" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- dots -->
+        <circle cx="40"  cy="65" r="4" fill="#0F6E56"/><text x="40"  y="61" font-size="9" fill="#0F6E56" text-anchor="middle">67</text><text x="40"  y="88" font-size="8" fill="#888" text-anchor="middle">1950</text>
+        <circle cx="120" cy="55" r="4" fill="#0F6E56"/><text x="120" y="88" font-size="8" fill="#888" text-anchor="middle">1965</text>
+        <circle cx="200" cy="44" r="4" fill="#0F6E56"/><text x="200" y="88" font-size="8" fill="#888" text-anchor="middle">1980</text>
+        <circle cx="280" cy="33" r="4" fill="#0F6E56"/><text x="280" y="88" font-size="8" fill="#888" text-anchor="middle">1995</text>
+        <circle cx="360" cy="23" r="4" fill="#0F6E56"/><text x="360" y="88" font-size="8" fill="#888" text-anchor="middle">2010</text>
+        <circle cx="440" cy="16" r="4" fill="#0F6E56"/><text x="440" y="12" font-size="9" fill="#0F6E56" text-anchor="middle">81</text><text x="440" y="88" font-size="8" fill="#888" text-anchor="middle">2023</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- DETAIL: MIGRATION -->
+  <div class="c-detail" id="cd-mig" style="--detail-accent:var(--blue);--fact-bg:var(--blue-l);border-color:var(--blue)">
+    <div class="d-title">🌍 Migration</div>
+    <div class="d-text">
+      Zuwanderung kann den demografischen Wandel <strong>verlangsamen</strong>, aber nicht stoppen. Migrant:innen sind im Schnitt jünger als die Gesamtbevölkerung und tragen zur Verjüngung sowie zur Stabilisierung des Erwerbspersonenpotenzials bei.
+      <br><br>
+      Um die Lücke durch sinkende Geburtenraten allein durch Migration zu schließen, wäre eine Zuwanderung nötig, die gesellschaftlich und infrastrukturell kaum umsetzbar wäre. Deshalb braucht es ein <strong>Bündel an Maßnahmen</strong>: Familienpolitik, Fachkräftezuwanderung, Rentensystemreformen und mehr.
+    </div>
+    <div class="facts">
+      <div class="fact"><span class="fact-n">~34</span><div class="fact-l">Ø-Alter Zuziehende<br>(Jahre)</div></div>
+      <div class="fact"><span class="fact-n">~1 Mio.</span><div class="fact-l">Netto-Zuzüge<br>(Spitzenjahre)</div></div>
+      <div class="fact"><span class="fact-n">verlangsamt</span><div class="fact-l">Effekt auf<br>Bevölkerungsalterung</div></div>
+    </div>
+    <div class="mini-chart" style="padding:.875rem 1rem">
+      <div class="mini-chart-label">Wirkung der drei Treiber auf die Altersstruktur</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;font-size:11px">
+        <div style="text-align:center">
+          <div style="height:6px;background:var(--coral);border-radius:3px;width:90%;margin:0 auto 4px"></div>
+          <div style="color:var(--coral);font-weight:600">Geburtenrate ↓</div>
+          <div style="color:var(--text2);font-size:10px;margin-top:2px">verschmälert Basis stark</div>
+        </div>
+        <div style="text-align:center">
+          <div style="height:6px;background:var(--teal);border-radius:3px;width:90%;margin:0 auto 4px"></div>
+          <div style="color:var(--teal);font-weight:600">Lebenserwartung ↑</div>
+          <div style="color:var(--text2);font-size:10px;margin-top:2px">verbreitert Spitze stark</div>
+        </div>
+        <div style="text-align:center">
+          <div style="height:6px;background:var(--blue);border-radius:3px;width:50%;margin:0 auto 4px"></div>
+          <div style="color:var(--blue);font-weight:600">Migration →</div>
+          <div style="color:var(--text2);font-size:10px;margin-top:2px">dämpft Effekte teilweise</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 2: BEVÖLKERUNGSPYRAMIDE      -->
+<!-- ══════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-eyebrow">Schritt 2 — Visualisierung</div>
+  <div class="sec-title">Bevölkerungspyramide Deutschland</div>
+  <p class="sec-desc">Wähle ein Jahr und beobachte, wie sich die Altersstruktur verändert. Erkennst du die Auswirkungen der drei Treiber? Angaben in Tausend Personen.</p>
+
+  <div class="pyr-controls">
+    <span class="pyr-label-small">Jahr:</span>
+    <button class="yr-btn active" onclick="setYear(1950)" id="btn-1950">1950</button>
+    <button class="yr-btn" onclick="setYear(1970)" id="btn-1970">1970</button>
+    <button class="yr-btn" onclick="setYear(1990)" id="btn-1990">1990</button>
+    <button class="yr-btn" onclick="setYear(2010)" id="btn-2010">2010</button>
+    <button class="yr-btn" onclick="setYear(2023)" id="btn-2023">2023</button>
+    <button class="yr-btn" onclick="setYear(2050)" id="btn-2050">2050 *</button>
+  </div>
+
+  <div class="pyr-legend">
+    <div><span class="ldot" style="background:#185FA5"></span>Männer</div>
+    <div style="font-size:11px;color:var(--text2)">Altersgruppe</div>
+    <div>Frauen<span class="ldot" style="background:#D85A30;margin-left:4px;margin-right:0"></span></div>
+  </div>
+
+  <div id="pyr"></div>
+
+  <div class="stats-row">
+    <div class="s-card">
+      <div class="s-lbl">Medianalter</div>
+      <div class="s-val" id="s-age">35,4</div>
+      <div class="s-unit">Jahre</div>
+    </div>
+    <div class="s-card">
+      <div class="s-lbl">Anteil 65+</div>
+      <div class="s-val" id="s-old">9,7</div>
+      <div class="s-unit">Prozent der Bevölkerung</div>
+    </div>
+    <div class="s-card">
+      <div class="s-lbl">Erwerbstätige je Rentner</div>
+      <div class="s-val" id="s-rat">5,8</div>
+      <div class="s-unit">Verhältnis (20–64 / 65+)</div>
+    </div>
+  </div>
+  <p class="pyr-note">* Projektion · Quellen: Statistisches Bundesamt, UN World Population Prospects 2024</p>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 3: QUIZ                      -->
+<!-- ══════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-eyebrow">Schritt 3 — Wissenscheck</div>
+  <div class="sec-title">Teste dein Wissen</div>
+  <p class="sec-desc">Vier Fragen zum Gelernten. Klicke auf deine Antwort — du siehst das Feedback sofort.</p>
+
+  <div id="quiz-qs">
+
+    <div class="q-block">
+      <div class="q-num">Frage 1 von 4</div>
+      <div class="q-text">Was beschreibt den demografischen Wandel in Deutschland am treffendsten?</div>
+      <div class="opts">
+        <button class="opt" onclick="answer(this,0,false)">Die Bevölkerung wird jünger und wächst stark an.</button>
+        <button class="opt" onclick="answer(this,0,true)">Die Bevölkerung altert: Es gibt immer mehr Ältere und relativ weniger Junge.</button>
+        <button class="opt" onclick="answer(this,0,false)">Der Anteil der Kinder unter 10 Jahren steigt seit 2000 deutlich.</button>
+        <button class="opt" onclick="answer(this,0,false)">Die Geburtenrate liegt seit 20 Jahren über dem Bestandserhaltungsniveau.</button>
+      </div>
+      <div class="q-fb" id="qf-0"></div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-num">Frage 2 von 4</div>
+      <div class="q-text">Wie viele Kinder je Frau sind nötig, um die Bevölkerungsgröße langfristig stabil zu halten (Bestandserhaltungsniveau)?</div>
+      <div class="opts">
+        <button class="opt" onclick="answer(this,1,false)">1,0 — ein Kind pro Frau reicht</button>
+        <button class="opt" onclick="answer(this,1,false)">1,5 — genau der aktuelle deutsche Wert</button>
+        <button class="opt" onclick="answer(this,1,true)">2,1 — etwas mehr als zwei Kinder</button>
+        <button class="opt" onclick="answer(this,1,false)">3,0 — drei Kinder pro Frau</button>
+      </div>
+      <div class="q-fb" id="qf-1"></div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-num">Frage 3 von 4</div>
+      <div class="q-text">Welches Verhältnis von Erwerbstätigen zu Rentnern wird für Deutschland um 2050 projiziert?</div>
+      <div class="opts">
+        <button class="opt" onclick="answer(this,2,false)">Ca. 5 Erwerbstätige je Rentner — ähnlich wie 1950</button>
+        <button class="opt" onclick="answer(this,2,false)">Ca. 3 Erwerbstätige je Rentner</button>
+        <button class="opt" onclick="answer(this,2,true)">Ca. 1,7 Erwerbstätige je Rentner</button>
+        <button class="opt" onclick="answer(this,2,false)">Ca. 0,5 Erwerbstätige je Rentner</button>
+      </div>
+      <div class="q-fb" id="qf-2"></div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-num">Frage 4 von 4</div>
+      <div class="q-text">Welche Aussage zur Migration und zum demografischen Wandel ist korrekt?</div>
+      <div class="opts">
+        <button class="opt" onclick="answer(this,3,false)">Migration kann den demografischen Wandel vollständig stoppen.</button>
+        <button class="opt" onclick="answer(this,3,true)">Migration verlangsamt den Wandel, löst das Problem aber nicht allein.</button>
+        <button class="opt" onclick="answer(this,3,false)">Migration hat keinen messbaren Einfluss auf die Altersstruktur.</button>
+        <button class="opt" onclick="answer(this,3,false)">Migrant:innen sind im Schnitt älter als die einheimische Bevölkerung.</button>
+      </div>
+      <div class="q-fb" id="qf-3"></div>
+    </div>
+
+  </div>
+
+  <div class="quiz-result" id="quiz-result">
+    <div class="qr-score" id="qr-num">4 / 4</div>
+    <div class="qr-of">richtige Antworten</div>
+    <div class="qr-msg" id="qr-msg"></div>
+    <button class="qr-retry" onclick="retryQuiz()">Nochmal versuchen</button>
+  </div>
+</div>
+
+<div class="footer">
+  Quellen: Statistisches Bundesamt (Destatis) · UN World Population Prospects 2024 · Bundeszentrale für politische Bildung
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- JAVASCRIPT                           -->
+<!-- ══════════════════════════════════════ -->
+<script>
+
+/* ────────────── CAUSES ────────────── */
+let openCause = null;
+function toggleCause(id) {
+  if (openCause && openCause !== id) {
+    document.getElementById('cd-' + openCause).classList.remove('open');
+    document.getElementById('cc-' + openCause).classList.remove('open');
+  }
+  const detail = document.getElementById('cd-' + id);
+  const card   = document.getElementById('cc-' + id);
+  const isOpen = detail.classList.contains('open');
+  detail.classList.toggle('open', !isOpen);
+  card.classList.toggle('open', !isOpen);
+  openCause = isOpen ? null : id;
+  markStep(1);
+}
+
+/* ────────────── PYRAMID ────────────── */
+const ages = ['0–4','5–9','10–14','15–19','20–24','25–29','30–34','35–39','40–44','45–49','50–54','55–59','60–64','65–69','70–74','75–79','80+'];
+
+const pop = {
+  1950:{m:[2050,1800,1600,900,750,800,1000,1200,1100,1000,900,700,600,500,350,200,150],
+        f:[1950,1750,1550,1200,1100,1200,1300,1400,1300,1100,1000,900,800,700,500,350,300]},
+  1970:{m:[1900,1950,2000,1900,1600,1200,900,800,1100,1200,1100,1000,900,750,500,350,200],
+        f:[1820,1870,1920,1820,1580,1250,1000,900,1200,1350,1300,1100,1000,900,700,500,350]},
+  1990:{m:[1700,1650,1750,1850,1900,1950,2000,1800,1600,1200,900,850,1100,1200,1000,700,350],
+        f:[1620,1580,1670,1770,1820,1870,1920,1750,1580,1250,980,950,1200,1400,1200,1000,650]},
+  2010:{m:[1700,1900,2000,2100,2200,2100,2000,1900,2100,2200,2000,1700,1400,1200,1000,700,500],
+        f:[1620,1820,1920,2000,2110,2020,1920,1820,2020,2120,1950,1700,1450,1350,1200,1000,1000]},
+  2023:{m:[2000,2100,2000,2100,2400,2600,2700,2800,2600,2500,3000,3200,2900,2600,2200,1800,1800],
+        f:[1900,2000,1900,2000,2300,2500,2600,2700,2500,2400,2900,3100,2800,2700,2400,2100,2800]},
+  2050:{m:[1500,1550,1600,1650,1700,1750,1800,1850,1900,1950,2000,2050,2100,2400,2600,2300,3200],
+        f:[1420,1470,1520,1570,1620,1670,1720,1760,1810,1860,1910,1960,2010,2380,2700,2500,4000]}
+};
+
+const stats = {
+  1950:{age:'35,4',old:'9,7',rat:'5,8'},
+  1970:{age:'35,6',old:'13,7',rat:'4,8'},
+  1990:{age:'38,5',old:'15,1',rat:'4,5'},
+  2010:{age:'44,3',old:'20,6',rat:'3,1'},
+  2023:{age:'46,3',old:'22,3',rat:'2,9'},
+  2050:{age:'50,0',old:'31,5',rat:'1,7'}
+};
+
+(function buildPyramid() {
+  const W=700, lw=50, bh=19, bp=2, n=ages.length;
+  const hw=(W-lw)/2;
+  const H=n*(bh+bp)+36;
+  const xMax=4500;
+  const xs=v=>hw*v/xMax;
+  const gc='rgba(0,0,0,.07)', tc='rgba(0,0,0,.3)', lc='rgba(0,0,0,.55)';
+
+  const svg=d3.select('#pyr').append('svg')
+    .attr('viewBox',`0 0 ${W} ${H}`)
+    .attr('width','100%')
+    .attr('preserveAspectRatio','xMidYMid meet');
+
+  [1000,2000,3000,4000].forEach(t=>{
+    [hw-xs(t), hw+lw+xs(t)].forEach(x=>{
+      svg.append('line').attr('x1',x).attr('y1',0).attr('x2',x).attr('y2',n*(bh+bp))
+        .attr('stroke',gc).attr('stroke-width',0.5);
+      svg.append('text').attr('x',x).attr('y',n*(bh+bp)+15).attr('text-anchor','middle')
+        .attr('font-size',9).attr('fill',tc)
+        .text(t===1000?'1.000':t===2000?'2.000':t===3000?'3.000':'4.000');
+    });
+  });
+
+  svg.append('line').attr('x1',hw).attr('y1',0).attr('x2',hw).attr('y2',n*(bh+bp)).attr('stroke',gc).attr('stroke-width',0.5);
+  svg.append('line').attr('x1',hw+lw).attr('y1',0).attr('x2',hw+lw).attr('y2',n*(bh+bp)).attr('stroke',gc).attr('stroke-width',0.5);
+
+  const rAges=[...ages].reverse();
+  rAges.forEach((a,i)=>{
+    svg.append('text').attr('x',hw+lw/2).attr('y',i*(bh+bp)+bh/2+1)
+      .attr('text-anchor','middle').attr('dominant-baseline','middle')
+      .attr('font-size',9).attr('fill',lc).text(a);
+  });
+
+  const mG=svg.append('g'), fG=svg.append('g');
+
+  window._drawPyr=function(yr){
+    const d=pop[yr];
+    const rm=[...d.m].reverse(), rf=[...d.f].reverse();
+    mG.selectAll('rect').data(rm).join(
+      en=>en.append('rect').attr('x',v=>hw-xs(v)).attr('y',(_,i)=>i*(bh+bp))
+        .attr('width',v=>xs(v)).attr('height',bh).attr('fill','#185FA5').attr('rx',1).attr('opacity',.87),
+      up=>up.transition().duration(560).ease(d3.easeCubicInOut)
+        .attr('x',v=>hw-xs(v)).attr('width',v=>xs(v))
+    );
+    fG.selectAll('rect').data(rf).join(
+      en=>en.append('rect').attr('x',hw+lw).attr('y',(_,i)=>i*(bh+bp))
+        .attr('width',v=>xs(v)).attr('height',bh).attr('fill','#D85A30').attr('rx',1).attr('opacity',.87),
+      up=>up.transition().duration(560).ease(d3.easeCubicInOut).attr('width',v=>xs(v))
+    );
+    const s=stats[yr];
+    document.getElementById('s-age').textContent=s.age;
+    document.getElementById('s-old').textContent=s.old;
+    document.getElementById('s-rat').textContent=s.rat;
+  };
+
+  window._drawPyr(1950);
+})();
+
+function setYear(yr){
+  document.querySelectorAll('.yr-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btn-'+yr).classList.add('active');
+  window._drawPyr(yr);
+  markStep(2);
+}
+
+/* ────────────── QUIZ ────────────── */
+const answered=[false,false,false,false];
+const scores  =[false,false,false,false];
+
+const FB=[
+  {ok:'✓ Richtig! Der demografische Wandel beschreibt das Altern der Gesellschaft: Der Anteil Älterer wächst, während der Anteil Jüngerer schrumpft.',
+   err:'✗ Leider falsch. Richtig: Die Bevölkerung altert — mehr Ältere, relativ weniger Junge, langfristig schrumpfende Gesamtbevölkerung.'},
+  {ok:'✓ Richtig! Das Bestandserhaltungsniveau liegt bei 2,1 Kindern je Frau — etwas mehr als 2, weil ein kleiner Anteil vor der Reproduktionsphase stirbt. Deutschland liegt heute bei 1,5.',
+   err:'✗ Leider falsch. Das Bestandserhaltungsniveau beträgt 2,1 Kinder je Frau. Deutschland liegt aktuell bei ca. 1,5 — deutlich darunter.'},
+  {ok:'✓ Richtig! 1950 kamen noch fast 6 Erwerbstätige auf eine:n Rentner:in. Bis 2050 sinkt dieses Verhältnis auf ca. 1,7 — eine massive Belastung für das Rentensystem.',
+   err:'✗ Leider falsch. Die Projektion liegt bei ca. 1,7 Erwerbstätigen je Rentner:in — ein drastischer Rückgang von fast 6 im Jahr 1950.'},
+  {ok:'✓ Richtig! Zuwanderung verjüngt die Bevölkerung und stärkt die Erwerbsbasis — kann die strukturellen Ursachen des Wandels aber nicht allein kompensieren.',
+   err:'✗ Leider falsch. Migration verlangsamt den demografischen Wandel, kann ihn aber nicht stoppen. Es braucht ein Bündel an Maßnahmen.'}
+];
+
+const MSGS=[
+  'Noch einiges zu üben! Schau dir die Erklärungen der drei Treiber nochmals in Ruhe an.',
+  'Ein guter Anfang! Einige Konzepte kannst du noch vertiefen — lies die Detailkarten nochmal.',
+  'Fast perfekt — sehr gut! Du hast die meisten Kernkonzepte verstanden.',
+  'Hervorragend! Du hast alle Kernkonzepte des demografischen Wandels verstanden. 🎉'
+];
+
+function answer(btn, qIdx, isCorrect) {
+  if (answered[qIdx]) return;
+  answered[qIdx]=true; scores[qIdx]=isCorrect;
+  const opts=btn.closest('.opts').querySelectorAll('.opt');
+  opts.forEach(o=>o.disabled=true);
+  btn.classList.add(isCorrect?'correct':'wrong');
+  if(!isCorrect) opts.forEach(o=>{ if(o.getAttribute('onclick').endsWith(',true)')) o.classList.add('correct'); });
+  const fb=document.getElementById('qf-'+qIdx);
+  fb.textContent=isCorrect?FB[qIdx].ok:FB[qIdx].err;
+  fb.className='q-fb show '+(isCorrect?'ok':'err');
+  if(answered.every(Boolean)) setTimeout(showResult, 450);
+  markStep(3);
+}
+
+function showResult(){
+  const c=scores.filter(Boolean).length;
+  document.getElementById('qr-num').textContent=c+' / 4';
+  document.getElementById('qr-msg').textContent=MSGS[c];
+  document.getElementById('quiz-result').classList.add('show');
+  markStep(3, true);
+}
+
+function retryQuiz(){
+  answered.fill(false); scores.fill(false);
+  document.getElementById('quiz-result').classList.remove('show');
+  document.querySelectorAll('.opt').forEach(o=>{
+    o.disabled=false; o.classList.remove('correct','wrong');
+  });
+  document.querySelectorAll('.q-fb').forEach(f=>{
+    f.className='q-fb'; f.textContent='';
+  });
+}
+
+/* ────────────── PROGRESS ────────────── */
+const reached=[false,false,false];
+function markStep(n, done){
+  if(reached[n-1]&&!done) return;
+  reached[n-1]=true;
+  const dot=document.getElementById('pd'+n);
+  dot.classList.remove('active');
+  dot.classList.add(done?'done':'active');
+  if(done&&n<3){ document.getElementById('pd'+(n+1)).classList.add('active'); }
+  else if(!done&&n<3&&!reached[n]){ document.getElementById('pd'+(n+1)).classList.add('active'); }
+}
+</script>
+</body>
+</html>
