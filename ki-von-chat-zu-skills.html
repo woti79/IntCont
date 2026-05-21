@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Von Chat zu Skills</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F9F6EF;--dark:#18161F;--dark2:#22202B;
+  --accent:#CA8C1E;--accent-dim:rgba(202,140,30,0.12);--accent-b:rgba(202,140,30,0.35);
+  --text:#1E1C28;--muted:#706A7E;--border:rgba(30,28,40,0.1);--r:14px;
+  --serif:'Fraunces',Georgia,serif;--sans:'DM Sans',system-ui,sans-serif;
+  --cblue:#3D8FD4;--cpurple:#8B5CF6;--cteal:#0D9488;--corange:#EA6D3A;
+  --ok:#2E7D32;--ok-bg:rgba(46,125,50,0.1);--ok-b:rgba(46,125,50,0.35);
+  --err:#C62828;--err-bg:rgba(198,40,40,0.08);--err-b:rgba(198,40,40,0.3);
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:16px;line-height:1.7;}
+
+/* ── PROGRESS (Lernen only) ── */
+#prog-wrap{position:fixed;top:0;left:0;right:0;height:4px;background:rgba(0,0,0,0.06);z-index:8000;transition:opacity 0.3s;}
+#prog-fill{height:100%;background:linear-gradient(to right,var(--accent),#D4A43A);width:0%;transition:width 0.2s;}
+body.pres #prog-wrap{opacity:0;pointer-events:none;}
+
+/* ── MODE INDICATOR ── */
+#mode-badge{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:8001;background:rgba(24,22,31,0.75);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:6px 18px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.55);backdrop-filter:blur(10px);pointer-events:none;transition:opacity 0.4s;}
+#mode-badge.lernen{color:rgba(202,140,30,0.9);}
+#mode-badge.pres-badge{color:rgba(139,92,246,0.9);}
+body.pres #mode-badge{display:none;}
+
+/* ── LAYOUT ── */
+.s{padding:72px 48px;}.s .c,.gap-s .c,.tl-section .c{max-width:1120px;margin:0 auto;}
+.eyebrow,.eye{font-size:11px;letter-spacing:0.09em;text-transform:uppercase;font-weight:600;color:var(--accent);margin-bottom:10px;}
+.s h2{font-family:var(--serif);font-size:clamp(26px,4vw,44px);font-weight:600;margin-bottom:14px;}
+.s .intro{font-size:17px;color:var(--muted);max-width:620px;line-height:1.75;margin-bottom:44px;}
+@media(max-width:680px){.s,.hero,.learn-band{padding:48px 20px;}}
+
+/* ── HERO ── */
+.hero{background:var(--dark);color:#fff;padding:80px 48px 68px;position:relative;overflow:hidden;}
+.hero::after{content:'';position:absolute;bottom:-120px;right:-80px;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(202,140,30,0.12) 0%,transparent 70%);pointer-events:none;}
+.hero .c{max-width:1120px;margin:0 auto;position:relative;z-index:1;}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(202,140,30,0.15);border:1px solid var(--accent-b);border-radius:100px;padding:5px 16px;font-size:11px;letter-spacing:0.09em;text-transform:uppercase;font-weight:600;color:var(--accent);margin-bottom:28px;}
+.hero h1{font-family:var(--serif);font-size:clamp(44px,7vw,80px);font-weight:700;margin-bottom:22px;color:#fff;letter-spacing:-0.01em;}
+.hero h1 em{font-style:italic;color:var(--accent);}
+.hero .lead{font-size:18px;color:rgba(255,255,255,0.65);max-width:580px;line-height:1.7;margin-bottom:48px;}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid rgba(255,255,255,0.08);padding-top:32px;}
+.hero-stat{padding:0 28px 0 0;border-right:1px solid rgba(255,255,255,0.07);}
+.hero-stat:first-child{padding-left:0;}.hero-stat:last-child{border-right:none;}
+.hs-num{font-family:var(--serif);font-size:32px;font-weight:700;color:var(--accent);line-height:1;margin-bottom:6px;}
+.hs-lbl{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.5;max-width:140px;}
+
+/* ── INTRO ── */
+.intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:start;}
+.intro-body p{font-size:15.5px;line-height:1.8;color:var(--text);margin-bottom:14px;}
+.callout{background:var(--accent-dim);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:16px 20px;margin:18px 0;}
+.callout p{font-size:14px;color:#6B4E10;font-style:italic;line-height:1.7;}
+.fc-stack{display:flex;flex-direction:column;gap:12px;}
+.fc{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;display:flex;gap:14px;align-items:flex-start;}
+.fc .fn{font-family:var(--serif);font-size:30px;font-weight:700;color:var(--accent);line-height:1;flex-shrink:0;width:72px;}
+.fc .fd{font-size:13px;color:var(--muted);line-height:1.55;}
+.fc .fd strong{display:block;font-size:13.5px;color:var(--text);font-weight:600;margin-bottom:2px;}
+
+/* ── TIMELINE ── */
+.tl-section{background:var(--dark);padding:72px 0;}
+.tl-section .c{padding:0 48px;}
+.tl-section .eyebrow{color:rgba(202,140,30,0.8);}
+.tl-section h2{color:#fff;font-family:var(--serif);font-size:clamp(26px,4vw,44px);margin-bottom:10px;}
+.tl-section .tl-intro{color:rgba(255,255,255,0.5);max-width:600px;line-height:1.7;margin-bottom:48px;font-size:16px;}
+.tl-track{overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch;}
+.tl-inner{min-width:740px;position:relative;padding:0 0 8px;}
+.tl-line{position:absolute;top:58px;left:8%;right:8%;height:2px;background:linear-gradient(to right,#3D8FD4,#8B5CF6,#0D9488,#EA6D3A,#C94F7A,#4CAF50);opacity:0.3;border-radius:1px;}
+.tl-nodes{display:flex;justify-content:space-between;width:100%;position:relative;z-index:1;}
+.tnode{display:flex;flex-direction:column;align-items:center;cursor:pointer;width:calc(100%/6);padding:0 6px;transition:transform 0.25s;}
+.tnode:hover{transform:translateY(-3px);}
+.tnode-date{font-size:10px;font-weight:500;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;text-align:center;white-space:nowrap;}
+.tnode-circ{width:48px;height:48px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;transition:all 0.3s;background:rgba(255,255,255,0.04);font-size:20px;}
+.tnode:hover .tnode-circ,.tnode.active .tnode-circ{transform:scale(1.18);}
+.tnode.active .tnode-circ{box-shadow:0 0 0 8px rgba(255,255,255,0.1);}
+.tnode-name{margin-top:12px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-align:center;transition:color 0.2s;line-height:1.3;}
+.tnode-sub{font-size:10px;color:rgba(255,255,255,0.22);text-align:center;margin-top:3px;}
+.tnode:hover .tnode-name,.tnode.active .tnode-name{color:#fff;}
+.tnode:hover .tnode-sub,.tnode.active .tnode-sub{color:rgba(255,255,255,0.5);}
+.dp{margin-top:36px;border-radius:var(--r);background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.07);overflow:hidden;max-height:0;opacity:0;transition:max-height 0.55s cubic-bezier(.4,0,.2,1),opacity 0.35s;}
+.dp.open{max-height:2800px;opacity:1;}
+.dp-inner{padding:34px 38px;}
+.dp-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:26px;padding-bottom:26px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.dp-icon{font-size:26px;width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.06);flex-shrink:0;}
+.dp-tag{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:5px;}
+.dp-title{font-family:var(--serif);font-size:24px;color:#fff;font-weight:700;line-height:1.1;}
+.dp-period{font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;}
+.dp-body{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+.dp-col h4{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;color:rgba(255,255,255,0.28);margin-bottom:9px;}
+.dp-col p{font-size:14px;color:rgba(255,255,255,0.7);line-height:1.75;margin-bottom:12px;}
+.olist{list-style:none;}
+.olist li{font-size:13px;color:rgba(255,255,255,0.62);padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;gap:8px;line-height:1.5;}
+.olist li::before{content:'→';flex-shrink:0;opacity:0.45;font-size:11px;}
+.dp-fact{margin-top:18px;padding:14px 16px;background:rgba(202,140,30,0.1);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;}
+.dp-fact p{font-size:12.5px;color:rgba(202,140,30,0.85);font-style:italic;line-height:1.65;}
+.adopt-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.adopt-lbl{font-size:12px;color:rgba(255,255,255,0.42);width:110px;flex-shrink:0;}
+.adopt-bg{flex:1;height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;}
+.adopt-fill{height:100%;border-radius:3px;transition:width 0.9s cubic-bezier(.4,0,.2,1);}
+.adopt-pct{font-size:11px;color:rgba(255,255,255,0.32);width:32px;text-align:right;flex-shrink:0;}
+
+/* ── GAP ── */
+.gap-s{background:var(--bg);padding:72px 48px;}
+.gap-info{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px;}
+.gi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:22px 26px;}
+.gi .gi-eye{font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);font-weight:600;margin-bottom:7px;}
+.gi h3{font-family:var(--serif);font-size:18px;margin-bottom:8px;line-height:1.25;}
+.gi p{font-size:13px;color:var(--muted);line-height:1.65;}
+.spectrum-wrap{overflow-x:auto;margin-top:44px;}
+.spectrum-table{width:100%;min-width:700px;border-collapse:collapse;}
+.spectrum-table th{font-size:10.5px;text-transform:uppercase;letter-spacing:0.07em;font-weight:600;padding:0 8px 14px;text-align:center;}
+.spectrum-table th:first-child{text-align:left;padding-left:0;}
+.spectrum-table td{padding:5px 4px;vertical-align:middle;}
+.spectrum-table td:first-child{font-size:13px;font-weight:500;padding-right:16px;white-space:nowrap;}
+.sc{height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;}
+.spec-leg{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;}
+.spec-leg span{font-size:11px;color:var(--muted);}
+
+/* ── LEITGEDANKEN ── */
+.opp-s{background:#F0EDE4;padding:72px 48px;}
+.opp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:40px;}
+.opp-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:24px 26px;border-top:3px solid;}
+.opp-tag{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:0.07em;font-weight:600;padding:3px 10px;border-radius:100px;margin-bottom:10px;}
+.opp-card h3{font-family:var(--serif);font-size:18px;font-weight:600;margin-bottom:7px;line-height:1.25;}
+.opp-card .od{font-size:13.5px;color:var(--muted);line-height:1.65;margin-bottom:12px;}
+
+/* ── EXKURSE ── */
+.exk{padding:72px 48px;}
+.exk .exk-i{max-width:1120px;margin:0 auto;}
+.exk .exk-grid{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:start;}
+.exk p{font-size:15px;line-height:1.82;color:var(--text);margin-bottom:14px;}
+.exk h3{font-family:var(--serif);font-size:17px;font-weight:600;margin-bottom:10px;}
+.exk-quote{padding:16px 20px;background:var(--accent-dim);border-left:3px solid var(--accent);border-radius:0 9px 9px 0;margin:20px 0;}
+.exk-quote p{font-size:14px;color:#5C4A1A;font-style:italic;line-height:1.7;margin-bottom:0;}
+.exk-quote small{font-size:11.5px;color:#8B7040;display:block;margin-top:6px;}
+.exk-side{display:flex;flex-direction:column;gap:0;}
+.exk-feat{padding:18px 0;border-top:1px solid var(--border);}
+.exk-feat h4{font-family:var(--serif);font-size:15.5px;font-weight:600;margin-bottom:5px;line-height:1.3;}
+.exk-feat p{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:0;}
+.exk-final{padding:16px 18px;background:var(--accent-dim);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;margin-top:20px;}
+.exk-final p{font-size:13px;color:#5C4A1A;line-height:1.65;font-style:italic;margin:0;}
+
+/* ── SOURCES ── */
+.src-s{background:var(--dark2);padding:52px 48px;}
+.src-s .c{max-width:1120px;margin:0 auto;}
+.src-s h3{font-family:var(--serif);font-size:18px;color:rgba(255,255,255,0.5);font-weight:400;font-style:italic;margin-bottom:20px;}
+.src-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 24px;}
+.src-item{font-size:12px;line-height:1.55;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(255,255,255,0.32);}
+.src-item em{color:rgba(255,255,255,0.55);font-style:italic;}
+.src-note{margin-top:28px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.06);font-size:11px;color:rgba(255,255,255,0.2);line-height:1.6;}
+
+/* ══ LERNEN ELEMENTS ══ */
+.learn-band{padding:48px;}
+.learn-band .c{max-width:1120px;margin:0 auto;}
+.lb-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.lb-badge{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 11px;border-radius:100px;}
+.lb-title{font-family:var(--serif);font-size:20px;font-weight:600;margin-bottom:6px;}
+.lb-sub{font-size:14.5px;color:var(--muted);margin-bottom:22px;line-height:1.65;}
+.qcard{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:24px 26px;margin-bottom:14px;}
+.qcard:last-child{margin-bottom:0;}
+.qc-tag{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;padding:3px 10px;border-radius:100px;margin-bottom:12px;}
+.qcard h4{font-family:var(--serif);font-size:17px;line-height:1.35;margin-bottom:16px;color:var(--text);}
+.q-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.q-opt{text-align:left;background:var(--bg);border:1.5px solid rgba(30,28,40,0.12);border-radius:9px;padding:10px 15px;font-size:14px;cursor:pointer;transition:all 0.2s;font-family:var(--sans);color:var(--text);line-height:1.4;}
+.q-opt:hover:not(:disabled){border-color:var(--accent);background:var(--accent-dim);}
+.q-opt.selected{border-color:var(--accent);background:var(--accent-dim);font-weight:500;}
+.q-opt.correct{border-color:var(--ok)!important;background:var(--ok-bg)!important;color:var(--ok);font-weight:500;}
+.q-opt.wrong{border-color:var(--err)!important;background:var(--err-bg)!important;color:var(--err);}
+.q-opt:disabled{cursor:default;}
+.q-opt.ms::before{content:'☐ ';font-size:15px;}.q-opt.ms.selected::before{content:'☑ ';}
+.q-opt.ms.correct::before{content:'✓ ';color:var(--ok);}.q-opt.ms.wrong::before{content:'✗ ';color:var(--err);}
+.q-fb{margin-top:12px;padding:12px 15px;border-radius:9px;font-size:13.5px;line-height:1.65;display:none;}
+.q-fb.ok{background:var(--ok-bg);color:var(--ok);border-left:3px solid var(--ok);}
+.q-fb.err{background:var(--err-bg);color:var(--err);border-left:3px solid var(--err);}
+.q-fb.neu{background:var(--accent-dim);color:#5C4A1A;border-left:3px solid var(--accent);}
+.check-btn{background:var(--dark);color:#fff;border:none;border-radius:9px;padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:background 0.2s;margin-top:4px;}
+.check-btn:hover:not(:disabled){background:#2d2b3a;}
+.check-btn:disabled{opacity:0.35;cursor:default;}
+
+/* DTW */
+.dtw-sent{font-size:16px;line-height:2.5;color:var(--text);margin-bottom:18px;}
+.dtw-gap{display:inline-block;min-width:88px;border-bottom:2px dashed var(--accent);padding:2px 10px;margin:0 4px;border-radius:6px;background:var(--accent-dim);cursor:pointer;font-weight:600;color:var(--muted);transition:all 0.2s;vertical-align:middle;text-align:center;}
+.dtw-gap.over{background:rgba(202,140,30,0.25);border-style:solid;}
+.dtw-gap.filled{color:var(--text);background:rgba(202,140,30,0.15);border-style:solid;}
+.dtw-gap.correct{color:var(--ok);background:var(--ok-bg);border-color:var(--ok);border-style:solid;}
+.dtw-gap.wrong{color:var(--err);background:var(--err-bg);border-color:var(--err);border-style:solid;}
+.dtw-pool{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;padding:12px;background:var(--bg);border-radius:10px;border:1px dashed rgba(30,28,40,0.15);}
+.dtw-word{background:#fff;border:1.5px solid rgba(30,28,40,0.15);border-radius:100px;padding:6px 16px;font-size:13.5px;cursor:grab;user-select:none;transition:all 0.2s;font-weight:500;}
+.dtw-word:hover{border-color:var(--accent);color:var(--accent);}
+.dtw-word.dragging{opacity:0.3;cursor:grabbing;}
+.dtw-word.used{opacity:0.2;pointer-events:none;text-decoration:line-through;}
+
+/* SORT */
+.sort-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.sort-item{background:#fff;border:1.5px solid rgba(30,28,40,0.12);border-radius:10px;padding:11px 15px;font-size:14px;cursor:grab;display:flex;align-items:center;gap:10px;user-select:none;transition:all 0.2s;line-height:1.4;}
+.sort-item:hover{border-color:var(--accent);}
+.sort-item.dragging{opacity:0.3;cursor:grabbing;border-style:dashed;}
+.sort-item.correct{border-color:var(--ok);background:var(--ok-bg);}
+.sort-item.wrong{border-color:var(--err);background:var(--err-bg);}
+.sort-handle{color:var(--muted);font-size:16px;flex-shrink:0;}
+.sort-num{font-size:11px;font-weight:700;width:18px;text-align:right;flex-shrink:0;color:var(--muted);}
+.sort-item.correct .sort-num{color:var(--ok);}
+.sort-item.wrong .sort-num{color:var(--err);}
+
+/* STAGE SELECTOR */
+.stg-sel{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.stg-btn{background:#fff;border:1.5px solid rgba(30,28,40,0.12);border-radius:100px;padding:8px 16px;font-size:13px;cursor:pointer;font-family:var(--sans);transition:all 0.2s;}
+.stg-btn:hover{border-color:var(--cteal);}
+.stg-btn.sel{background:var(--cteal);color:#fff;border-color:var(--cteal);}
+
+/* REFLECT */
+.reflect-ta{width:100%;border:1.5px solid rgba(30,28,40,0.12);border-radius:10px;padding:12px 15px;font-size:14.5px;font-family:var(--sans);line-height:1.75;resize:vertical;min-height:88px;color:var(--text);background:#fff;margin-bottom:10px;}
+.reflect-ta:focus{outline:none;border-color:var(--accent);}
+.save-confirm{font-size:13px;color:var(--cteal);font-weight:500;display:none;margin-left:8px;}
+
+/* EVAL */
+.eval-s{background:var(--dark);padding:72px 48px;color:#fff;}
+.eval-s .c{max-width:1120px;margin:0 auto;}
+.eval-s h2{font-family:var(--serif);font-size:clamp(24px,4vw,40px);color:#fff;font-weight:600;margin-bottom:8px;}
+.eval-intro{font-size:16px;color:rgba(255,255,255,0.5);margin-bottom:36px;}
+.eval-btn{background:var(--accent);color:var(--dark);border:none;border-radius:10px;padding:13px 30px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:background 0.2s;margin-bottom:36px;}
+.eval-btn:hover{background:#b8790e;}
+.score-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:36px;text-align:center;margin-bottom:40px;display:none;}
+.score-card.show{display:block;}
+.score-ring{font-family:var(--serif);font-size:76px;font-weight:700;color:var(--accent);line-height:1;}
+.score-sub{font-size:14px;color:rgba(255,255,255,0.45);margin-top:8px;}
+.score-bar-wrap{max-width:380px;margin:20px auto 0;height:7px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;}
+.score-bar-fill{height:100%;border-radius:4px;background:linear-gradient(to right,var(--accent),#4CAF50);transition:width 1.2s ease;}
+.score-msg{font-family:var(--serif);font-size:19px;color:rgba(255,255,255,0.75);margin-top:18px;font-style:italic;}
+.rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:40px;}
+.rev-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px 18px;display:none;}
+.rev-item.show{display:block;}
+.rev-item.rc{border-left:3px solid var(--ok);}
+.rev-item.rw{border-left:3px solid var(--err);}
+.rev-q{font-size:11px;color:rgba(255,255,255,0.32);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;}
+.rev-a{font-size:14px;color:rgba(255,255,255,0.72);line-height:1.5;}
+.rev-correct{font-size:13px;color:rgba(76,175,80,0.85);margin-top:5px;font-style:italic;}
+.eval-refs{display:none;}.eval-refs.show{display:block;}
+.eval-refs h3{font-family:var(--serif);font-size:22px;color:#fff;margin-bottom:18px;font-weight:600;}
+.eval-ref-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.eval-ref-box h4{font-size:12px;color:rgba(255,255,255,0.38);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;}
+.eval-ref-text{font-size:14px;color:rgba(255,255,255,0.65);line-height:1.7;padding:12px 15px;background:rgba(255,255,255,0.04);border-radius:9px;font-style:italic;min-height:56px;}
+.free-ta{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:13px 15px;font-size:14px;font-family:var(--sans);line-height:1.75;resize:vertical;min-height:90px;color:#fff;}
+.free-ta:focus{outline:none;border-color:var(--accent);}
+
+/* ══ PRESENTATION MODE ══ */
+#gear-wrap{position:fixed;top:14px;right:18px;z-index:9999;display:flex;align-items:center;gap:10px;flex-direction:row-reverse;}
+#gear-btn{width:34px;height:34px;border-radius:50%;background:rgba(24,22,31,0.65);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,0.5);font-size:15px;backdrop-filter:blur(8px);transition:all 0.2s;flex-shrink:0;}
+#gear-btn:hover{background:rgba(24,22,31,0.9);color:rgba(255,255,255,0.9);}
+#mode-toggle{overflow:hidden;max-width:0;opacity:0;pointer-events:none;transition:max-width 0.4s,opacity 0.3s;display:flex;align-items:center;gap:10px;background:rgba(24,22,31,0.88);border:1px solid rgba(255,255,255,0.12);border-radius:100px;padding:8px 18px;backdrop-filter:blur(10px);white-space:nowrap;cursor:pointer;}
+#gear-wrap.open #mode-toggle,body.pres #gear-wrap #mode-toggle{max-width:300px;opacity:1;pointer-events:auto;}
+#lbl-l,#lbl-p{font-size:12px;font-weight:600;font-family:var(--sans);letter-spacing:0.04em;transition:color 0.3s;}
+#lbl-l{color:rgba(255,255,255,0.9);}#lbl-p{color:rgba(255,255,255,0.32);}
+#ttrack{width:36px;height:20px;background:rgba(255,255,255,0.15);border-radius:10px;position:relative;transition:background 0.35s;flex-shrink:0;}
+#tknob{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform 0.35s;}
+body.pres #tknob{transform:translateX(16px);}
+body.pres #ttrack{background:#8B5CF6;}
+body.pres #lbl-l{color:rgba(255,255,255,0.32);}
+body.pres #lbl-p{color:rgba(255,255,255,0.9);}
+
+/* Slide system */
+body.pres{overflow:hidden;}
+body.pres .learn-band,body.pres .eval-s,body.pres .src-s{display:none!important;}
+body.pres .dp{display:none!important;}
+body.pres [data-slide]{position:fixed!important;inset:0!important;margin:0!important;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.4s,transform 0.4s;transform:translateY(14px);}
+body.pres [data-slide].slide-active{opacity:1;pointer-events:auto;z-index:201;transform:translateY(0);}
+.pres-spacer{display:block;height:80px;}
+
+/* Pres-mode sizing */
+body.pres .hero{padding:52px 64px!important;display:flex!important;flex-direction:column!important;justify-content:center!important;}
+body.pres .hero h1{font-size:clamp(44px,7vw,80px)!important;}
+body.pres .hero .lead{font-size:17px!important;margin-bottom:32px!important;}
+body.pres .hero-stats{padding-top:24px!important;}
+body.pres .hs-num{font-size:28px!important;}
+body.pres .hs-lbl{font-size:11px!important;}
+body.pres .s{padding:32px 48px!important;}
+body.pres .tl-section{padding:36px 0!important;}
+body.pres .tl-intro{margin-bottom:32px!important;font-size:14px!important;}
+body.pres .gap-s{padding:32px 48px!important;}
+body.pres .gap-s h2{font-size:clamp(22px,3.5vw,34px)!important;}
+body.pres .gap-s .intro{font-size:14px!important;margin-bottom:14px!important;}
+body.pres .spectrum-wrap,body.pres .spec-leg{display:none!important;}
+body.pres .gap-info{margin-top:14px!important;gap:12px!important;}
+body.pres .gi{padding:14px 18px!important;}
+body.pres .gi h3{font-size:15px!important;margin-bottom:4px!important;}
+body.pres .gi p{font-size:12.5px!important;line-height:1.5!important;}
+body.pres .opp-s{background:var(--dark)!important;padding:36px 48px!important;}
+body.pres .opp-s h2{color:#fff!important;font-size:clamp(22px,3.5vw,36px)!important;}
+body.pres .opp-s .eyebrow{color:rgba(202,140,30,0.85)!important;}
+body.pres .opp-s .intro{color:rgba(255,255,255,0.5)!important;font-size:14px!important;margin-bottom:20px!important;}
+body.pres .opp-s .sec-src .ss{color:rgba(255,255,255,0.25)!important;}
+body.pres .opp-s .sec-src{border-top-color:rgba(255,255,255,0.08)!important;}
+body.pres .opp-grid{grid-template-columns:repeat(3,1fr)!important;gap:12px!important;}
+body.pres .opp-card{background:rgba(255,255,255,0.04)!important;border:1px solid rgba(255,255,255,0.08)!important;cursor:pointer;padding:16px 18px!important;transition:transform 0.2s,box-shadow 0.2s;}
+body.pres .opp-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,0.55);}
+body.pres .opp-card h3{color:#fff!important;font-size:14px!important;margin-bottom:3px!important;}
+body.pres .opp-card .od{display:none!important;}
+body.pres .exk{padding:30px 48px!important;}
+body.pres .exk h2{font-size:clamp(20px,3vw,32px)!important;margin-bottom:18px!important;}
+body.pres .exk p{font-size:13.5px!important;line-height:1.65!important;margin-bottom:10px!important;}
+body.pres .exk-side{position:relative!important;top:unset!important;}
+body.pres .intro-grid{gap:32px!important;}
+body.pres .fc{padding:11px 15px!important;}
+body.pres .fc .fn{font-size:24px!important;}
+body.pres .fc .fd{font-size:12px!important;line-height:1.4!important;}
+body.pres .fc-stack{gap:9px!important;}
+body.pres .intro-body p{font-size:14px!important;line-height:1.65!important;margin-bottom:9px!important;}
+body.pres .callout{padding:11px 15px!important;margin:10px 0!important;}
+body.pres .callout p{font-size:12.5px!important;}
+
+/* Slide nav */
+#slide-nav{position:fixed;bottom:0;left:0;right:0;z-index:9997;display:none;align-items:center;justify-content:space-between;background:rgba(18,16,26,0.93);border-top:1px solid rgba(255,255,255,0.07);padding:11px 28px;backdrop-filter:blur(12px);}
+body.pres #slide-nav{display:flex;}
+.sn-btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:rgba(255,255,255,0.7);font-size:18px;width:40px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;}
+.sn-btn:hover{background:rgba(255,255,255,0.14);color:#fff;}
+.sn-btn:disabled{opacity:0.22;cursor:default;}
+#sn-mid{display:flex;flex-direction:column;align-items:center;gap:5px;}
+#sn-dots{display:flex;gap:6px;align-items:center;}
+.sn-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.22);transition:all 0.25s;cursor:pointer;}
+.sn-dot.active{background:var(--accent);transform:scale(1.4);}
+#sn-title{font-size:11px;color:rgba(255,255,255,0.32);letter-spacing:0.07em;text-transform:uppercase;}
+#sn-ctr{font-size:11px;color:rgba(255,255,255,0.28);min-width:34px;text-align:center;}
+
+/* ── TL MODAL ── */
+#tl-modal{position:fixed;inset:0;background:rgba(12,10,20,0.97);z-index:99998;display:none;align-items:center;justify-content:center;padding:28px 24px 90px;}
+#tl-modal.open{display:flex;}
+#tlm-card{background:#22202B;border:1px solid rgba(255,255,255,0.09);border-radius:16px;width:100%;max-width:1020px;max-height:calc(100vh-140px);overflow-y:auto;display:flex;flex-direction:column;}
+#tlm-head{display:flex;align-items:flex-start;gap:14px;padding:26px 30px 20px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+#tlm-icon{font-size:24px;width:48px;height:48px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.06);flex-shrink:0;}
+#tlm-tag{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:4px;}
+#tlm-title{font-family:var(--serif);font-size:22px;color:#fff;font-weight:700;line-height:1.15;}
+#tlm-period{font-size:12px;color:rgba(255,255,255,0.35);margin-top:4px;}
+#tlm-close{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;}
+#tlm-close:hover{background:rgba(255,255,255,0.1);color:#fff;}
+#tlm-body{display:grid;grid-template-columns:1fr 1fr;}
+#tlm-left,#tlm-right{padding:22px 30px;}
+#tlm-right{border-left:1px solid rgba(255,255,255,0.06);}
+#tlm-left h4,#tlm-right h4{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;color:rgba(255,255,255,0.28);margin-bottom:9px;margin-top:0;}
+#tlm-what,#tlm-edu{font-size:13.5px;color:rgba(255,255,255,0.68);line-height:1.75;margin-bottom:0;}
+#tlm-fact-box{padding:12px 15px;background:rgba(202,140,30,0.1);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;margin-top:14px;}
+#tlm-fact{font-size:12.5px;color:rgba(202,140,30,0.85);font-style:italic;line-height:1.65;margin:0;}
+#tlm-opps{list-style:none;padding:0;margin:0 0 14px;}
+#tlm-opps li{font-size:13px;color:rgba(255,255,255,0.62);padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;gap:8px;line-height:1.5;}
+#tlm-opps li::before{content:'→';opacity:0.35;flex-shrink:0;}
+.tlm-arow{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.tlm-albl{font-size:12px;color:rgba(255,255,255,0.42);width:110px;flex-shrink:0;}
+.tlm-abg{flex:1;height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;}
+.tlm-afill{height:100%;border-radius:3px;transition:width 0.85s ease;}
+.tlm-apct{font-size:11px;color:rgba(255,255,255,0.32);width:32px;text-align:right;flex-shrink:0;}
+#tlm-nav{display:flex;align-items:center;justify-content:center;gap:18px;padding:16px 30px;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+.tlm-arr{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:rgba(255,255,255,0.55);transition:all 0.2s;}
+.tlm-arr:hover{background:rgba(255,255,255,0.14);color:#fff;}
+#tlm-ctr{font-size:12px;color:rgba(255,255,255,0.3);min-width:36px;text-align:center;}
+
+/* ── LIGHTBOX ── */
+#lb{position:fixed;inset:0;background:rgba(18,16,26,0.97);z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:24px;}
+#lb.open{display:flex;}
+#lb-card{display:flex;align-items:center;gap:28px;max-width:960px;width:100%;}
+#lb-content{flex:1;min-width:0;}
+#lb-tag{font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600;margin-bottom:12px;}
+#lb-title{font-family:var(--serif);font-size:clamp(30px,5vw,52px);font-weight:700;color:#fff;line-height:1.1;margin-bottom:22px;}
+#lb-body{font-size:clamp(14px,1.5vw,18px);color:rgba(255,255,255,0.68);line-height:1.82;}
+#lb-body p{margin-bottom:0.85em;}
+.lb-arr{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:50%;width:50px;height:50px;min-width:50px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;color:rgba(255,255,255,0.5);transition:all 0.2s;}
+.lb-arr:hover{background:rgba(255,255,255,0.14);color:#fff;}
+#lb-footer{display:flex;align-items:center;gap:18px;}
+#lb-ctr{font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:0.08em;}
+#lb-close{background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);border-radius:100px;padding:7px 20px;font-size:13px;font-family:var(--sans);cursor:pointer;transition:all 0.2s;}
+#lb-close:hover{background:rgba(255,255,255,0.08);color:#fff;}
+
+/* ── SECTION SOURCES ── */
+.sec-src{margin-top:22px;padding-top:11px;border-top:1px solid rgba(30,28,40,0.09);display:flex;flex-wrap:wrap;gap:3px 22px;}
+.sec-src .ss{font-size:10.5px;color:var(--muted);line-height:1.55;display:flex;gap:4px;align-items:baseline;}
+.sec-src .ss::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:0.5;flex-shrink:0;margin-bottom:1px;}
+.sec-src.on-dark{border-top-color:rgba(255,255,255,0.09);}
+.sec-src.on-dark .ss{color:rgba(255,255,255,0.28);}
+.sec-src.on-dark .ss::before{opacity:0.6;}
+.sec-src .ss em{font-style:italic;color:inherit;}
+body.pres .sec-src{margin-top:10px;padding-top:8px;}
+sup.cn{font-size:9.5px;color:var(--accent);font-weight:700;vertical-align:super;line-height:0;margin-left:0.5px;}
+.on-dark sup.cn{color:rgba(202,140,30,0.85);}
+</style>
+</head>
+<body class="pres">
+<div id="prog-wrap"><div id="prog-fill"></div></div>
+<div id="mode-badge" class="pres-badge" style="display:none;">Präsentation</div>
+
+<!-- ═══ HERO ═══ -->
+<header class="hero" data-slide="1">
+  <div class="c">
+    <div class="hero-eyebrow">Interaktiv &middot; Hochschulkontext &middot; Stand Mai 2026</div>
+    <h1>Von <em>Chat</em><br>zu Skills</h1>
+    <p class="lead">Wie sich KI in weniger als vier Jahren von einem Chatbot zu autonomen Agentensystemen entwickelt hat – und was das für Hochschulen bedeutet.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hs-num">86 %<sup style="font-size:14px;color:var(--accent);">¹</sup></div><div class="hs-lbl">der Studierenden weltweit nutzen KI im Studium</div></div>
+      <div class="hero-stat"><div class="hs-num">88 %<sup style="font-size:14px;color:var(--accent);">²</sup></div><div class="hs-lbl">der Lehrenden, die KI nutzen, tun das nur minimal</div></div>
+      <div class="hero-stat"><div class="hs-num">&lt; 4 J.</div><div class="hs-lbl">von ChatGPT bis zu Skills und Agentennetzwerken</div></div>
+      <div class="hero-stat"><div class="hs-num">6 Stufen</div><div class="hs-lbl">der Entwicklung – interaktiv &amp; mit Quizfragen</div></div>
+    </div>
+    <div class="sec-src on-dark" style="margin-top:18px;">
+      <span class="ss"><sup class="cn">¹</sup><em>Digital Education Council (2024).</em> Global AI Student Survey 2024. N = 3.900 Studierende, 16 Länder.</span>
+      <span class="ss"><sup class="cn">²</sup><em>Digital Education Council (2025).</em> Global AI Faculty Survey 2025. N = 1.200 Lehrende, 33 Länder.</span>
+    </div>
+  </div>
+</header>
+
+<!-- LERNEN: Einstieg -->
+<div class="learn-band" style="background:rgba(139,92,246,0.08);border-top:1px solid rgba(139,92,246,0.18);border-bottom:1px solid rgba(139,92,246,0.18);">
+  <div class="c">
+    <div class="lb-head"><span class="lb-badge" style="background:rgba(139,92,246,0.12);color:var(--cpurple);">Einstieg · Nicht bewertet</span></div>
+    <div class="lb-title">Bevor es losgeht: Wo stehst du?</div>
+    <div class="qcard" id="q1">
+      <div class="qc-tag" style="background:rgba(139,92,246,0.1);color:var(--cpurple);">Selbsteinschätzung</div>
+      <h4>Auf welcher KI-Stufe bist du persönlich aktuell hauptsächlich unterwegs?</h4>
+      <div class="stg-sel" id="q1-sel">
+        <button class="stg-btn" onclick="selSelf(this)">💬 Chat</button>
+        <button class="stg-btn" onclick="selSelf(this)">📐 Prompt Engineering</button>
+        <button class="stg-btn" onclick="selSelf(this)">🧩 Custom GPTs</button>
+        <button class="stg-btn" onclick="selSelf(this)">🤖 Agenten</button>
+        <button class="stg-btn" onclick="selSelf(this)">🕸️ Netzwerke / MCP</button>
+        <button class="stg-btn" onclick="selSelf(this)">🎯 Skills</button>
+      </div>
+      <div class="q-fb neu" id="q1-fb" style="display:none;">Notiert. Diese Einschätzung wird am Ende der Lerneinheit interessant zum Vergleich.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ INTRO ═══ -->
+<section class="s s-intro" data-slide="2" style="background:#fff;">
+  <div class="c">
+    <div class="eyebrow">Einleitung</div>
+    <h2>Eine Revolution, die schneller läuft als ihre Adoption</h2>
+    <div class="intro-grid">
+      <div class="intro-body">
+        <p>Seit dem Launch von ChatGPT im November 2022 erlebt die Welt eine der schnellsten technologischen Entwicklungen in der Geschichte. Innerhalb von weniger als vier Jahren hat sich KI von einem neuartigen Chatbot zu komplexen Ökosystemen aus autonomen Agenten, vernetzten Multi-Agenten-Systemen und standardisierten Schnittstellen entwickelt.</p>
+        <div class="callout"><p>Die Technologie entwickelt sich auf Forschungsebene rasant weiter, während die meisten Nutzer:innen noch auf Stufe eins oder zwei unterwegs sind. Das ist die normale Diffusionskurve jeder transformativen Technologie. Die entscheidende Frage für Hochschulen: Wie lässt sich diese Lücke strategisch nutzen, statt von ihr überrollt zu werden?</p></div>
+        <p>Aktuelle Surveys bestätigen, was sich in der Praxis beobachten lässt: Studierende nutzen KI massenhaft, aber hauptsächlich im Chat-Modus. Lehrende agieren noch zögerlicher. EdTech-Produkte fokussieren auf Custom GPTs. Die L&D-Diskussion ist bei Agenten angelangt, ohne dass Institutionen dies bereits flächendeckend umsetzen.</p>
+      </div>
+      <div class="fc-stack">
+        <div class="fc"><div class="fn">92 %<sup class="cn">³</sup></div><div class="fd"><strong>Studierende in UK</strong>nutzen KI im Studium (HEPI 2025) – Anstieg von 66 % im Vorjahr.</div></div>
+        <div class="fc"><div class="fn">61 %<sup class="cn">⁴</sup></div><div class="fd"><strong>Lehrende weltweit</strong>haben KI in der Lehre erprobt – 88 % davon nur sporadisch (DEC, 2025).</div></div>
+        <div class="fc"><div class="fn">80 %<sup class="cn">⁴</sup></div><div class="fd"><strong>der Lehrenden</strong>berichten von fehlender institutioneller Klarheit zum KI-Einsatz.</div></div>
+        <div class="fc"><div class="fn">45 %<sup class="cn">⁵</sup></div><div class="fd"><strong>der Studierenden</strong>wünschen sich, dass Lehrende KI aktiv in den Unterricht integrieren.</div></div>
+      </div>
+    </div>
+    <div class="sec-src">
+      <span class="ss"><sup class="cn">³</sup><em>HEPI (2025).</em> Student Generative AI Survey 2025. Higher Education Policy Institute, Oxford.</span>
+      <span class="ss"><sup class="cn">⁴</sup><em>Digital Education Council (2025).</em> Global AI Faculty Survey 2025.</span>
+      <span class="ss"><sup class="cn">⁵</sup><em>Cengage (2024).</em> AI in Education Report 2024.</span>
+    </div>
+  </div>
+</section>
+
+<!-- LERNEN: T/F -->
+<div class="learn-band" style="background:rgba(61,143,212,0.08);border-top:1px solid rgba(61,143,212,0.15);border-bottom:1px solid rgba(61,143,212,0.15);">
+  <div class="c">
+    <div class="lb-badge" style="background:rgba(61,143,212,0.1);color:var(--cblue);display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 11px;border-radius:100px;margin-bottom:10px;">Lernfrage 1 · Wahr oder Falsch?</div>
+    <div class="qcard" id="q2">
+      <div class="qc-tag" style="background:rgba(61,143,212,0.1);color:var(--cblue);">Faktencheck</div>
+      <h4>„88 % der Studierenden weltweit nutzen KI im Studium nur sporadisch und minimal."</h4>
+      <div class="q-opts">
+        <button class="q-opt" onclick="answerTF('q2',this,false)">Wahr – die meisten Studierenden nutzen KI kaum</button>
+        <button class="q-opt" onclick="answerTF('q2',this,true)">Falsch – diese Zahl bezieht sich auf Lehrende, nicht auf Studierende</button>
+      </div>
+      <div class="q-fb" id="q2-fb"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TIMELINE ═══ -->
+<section class="tl-section" data-slide="3" id="timeline">
+  <div class="c">
+    <div class="eyebrow">Interaktiver Zeitstrahl</div>
+    <h2 style="color:#fff;">Sechs Entwicklungsstufen der KI</h2>
+    <p class="tl-intro">Klicke auf eine Stufe, um Details zur technologischen Entwicklung, zur Bedeutung für die Hochschullehre und zu konkreten Chancen zu erfahren. Quellen erscheinen in der Detailansicht der jeweiligen Stufe.</p>
+    <div class="tl-track"><div class="tl-inner"><div class="tl-line"></div><div class="tl-nodes" id="tlNodes"></div></div></div>
+    <div class="dp" id="dp"><div class="dp-inner" id="dpInner"></div></div>
+  </div>
+</section>
+
+<!-- LERNEN: Drag the words -->
+<div class="learn-band" style="background:rgba(234,109,58,0.08);border-top:1px solid rgba(234,109,58,0.15);border-bottom:1px solid rgba(234,109,58,0.15);">
+  <div class="c">
+    <div class="lb-badge" style="background:rgba(234,109,58,0.1);color:var(--corange);display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 11px;border-radius:100px;margin-bottom:10px;">Aufgabe 2 · Lückentext</div>
+    <div class="lb-title">Ziehe die richtigen Begriffe in die Lücken</div>
+    <div class="lb-sub">Ziehe die Wörter unten per Drag & Drop in die markierten Lücken. Klick auf eine Lücke gibt das Wort zurück.</div>
+    <div class="qcard" id="q3">
+      <div class="qc-tag" style="background:rgba(234,109,58,0.1);color:var(--corange);">Zuordnung</div>
+      <h4>Kernbegriffe der KI-Entwicklung</h4>
+      <div class="dtw-sent">
+        KI-Systeme, die selbstständig Teilaufgaben planen und ausführen, nennt man
+        <span class="dtw-gap" data-answer="Agenten" data-ph="Begriff">___</span>.
+        Ein offener Standard zur Verbindung von KI mit externen Tools heißt
+        <span class="dtw-gap" data-answer="MCP" data-ph="Kürzel">___</span>.
+        Wiederverwendbare, paketierte Prozess-Pakete für Agenten werden als
+        <span class="dtw-gap" data-answer="Skills" data-ph="Begriff">___</span> bezeichnet.
+      </div>
+      <div class="dtw-pool" id="q3-pool">
+        <span class="dtw-word" draggable="true" data-word="Agenten">Agenten</span>
+        <span class="dtw-word" draggable="true" data-word="MCP">MCP</span>
+        <span class="dtw-word" draggable="true" data-word="Skills">Skills</span>
+        <span class="dtw-word" draggable="true" data-word="Prompts">Prompts</span>
+        <span class="dtw-word" draggable="true" data-word="Chatbots">Chatbots</span>
+      </div>
+      <button class="check-btn" id="q3-btn" onclick="checkDTW('q3')" disabled>Überprüfen</button>
+      <div class="q-fb" id="q3-fb"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LERNEN: Sorting -->
+<div class="learn-band" style="background:rgba(139,92,246,0.08);border-top:1px solid rgba(139,92,246,0.15);border-bottom:1px solid rgba(139,92,246,0.15);">
+  <div class="c">
+    <div class="lb-badge" style="background:rgba(139,92,246,0.1);color:var(--cpurple);display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 11px;border-radius:100px;margin-bottom:10px;">Aufgabe 3 · Reihenfolge</div>
+    <div class="lb-title">Bringe die Meilensteine in chronologische Reihenfolge</div>
+    <div class="lb-sub">Ältester Eintrag oben. Ziehe die Karten per Drag & Drop.</div>
+    <div class="qcard" id="q4">
+      <div class="qc-tag" style="background:rgba(139,92,246,0.1);color:var(--cpurple);">Zeitliche Ordnung</div>
+      <h4>KI-Meilensteine sortieren</h4>
+      <div class="sort-list" id="q4-list">
+        <div class="sort-item" draggable="true" data-id="mcp"><span class="sort-handle">⠿</span><span class="sort-num"></span>MCP – Model Context Protocol (Anthropic)</div>
+        <div class="sort-item" draggable="true" data-id="chatgpt"><span class="sort-handle">⠿</span><span class="sort-num"></span>ChatGPT-Launch (OpenAI)</div>
+        <div class="sort-item" draggable="true" data-id="skills"><span class="sort-handle">⠿</span><span class="sort-num"></span>Agent Skills (Anthropic)</div>
+        <div class="sort-item" draggable="true" data-id="autogpt"><span class="sort-handle">⠿</span><span class="sort-num"></span>AutoGPT – erstes virales Agentensystem</div>
+        <div class="sort-item" draggable="true" data-id="customgpt"><span class="sort-handle">⠿</span><span class="sort-num"></span>Custom GPTs &amp; GPT Store (OpenAI)</div>
+      </div>
+      <button class="check-btn" onclick="checkSort('q4',['chatgpt','autogpt','customgpt','mcp','skills'])">Reihenfolge prüfen</button>
+      <div class="q-fb" id="q4-fb"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LERNEN: MC -->
+<div class="learn-band" style="background:rgba(61,143,212,0.08);border-top:1px solid rgba(61,143,212,0.15);border-bottom:1px solid rgba(61,143,212,0.15);">
+  <div class="c">
+    <div class="lb-badge" style="background:rgba(61,143,212,0.1);color:var(--cblue);display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 11px;border-radius:100px;margin-bottom:10px;">Lernfrage 4 · Multiple Choice</div>
+    <div class="qcard" id="q5">
+      <div class="qc-tag" style="background:rgba(61,143,212,0.1);color:var(--cblue);">Zeitliche Einordnung</div>
+      <h4>AutoGPT, das erste virale Agenten-System, wurde veröffentlicht …</h4>
+      <div class="q-opts">
+        <button class="q-opt" onclick="answerMC('q5',this,true,'AutoGPT erschien April 2023, also sechs Monate vor Custom GPTs (November 2023). Der Hype war groß, die Nutzung zunächst experimentell.')">… vor den Custom GPTs (April 2023, also rund sechs Monate früher)</button>
+        <button class="q-opt" onclick="answerMC('q5',this,false,'AutoGPT erschien April 2023, also sechs Monate VOR Custom GPTs (November 2023).')">… nach den Custom GPTs (Anfang 2024)</button>
+        <button class="q-opt" onclick="answerMC('q5',this,false,'Weder noch. AutoGPT startete April 2023, MCP kam erst November 2024.')">… gleichzeitig mit MCP (November 2024)</button>
+      </div>
+      <div class="q-fb" id="q5-fb"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADOPTION GAP ═══ -->
+<section class="gap-s s-gap" data-slide="4">
+  <div class="c">
+    <div class="eyebrow">Adoptionslücke</div>
+    <h2>Wo stehen die verschiedenen Gruppen?</h2>
+    <p class="intro" style="font-size:17px;color:var(--muted);max-width:620px;line-height:1.75;margin-bottom:0;">Die Lücke zwischen technologischer Entwicklung und tatsächlicher Nutzung ist keine Ausnahme, sondern die Regel jeder transformativen Technologie. Was auffällt: Die Schere öffnet sich derzeit besonders weit.</p>
+    <div class="spectrum-wrap"><table class="spectrum-table" id="specTable"></table></div>
+    <div class="spec-leg" id="specLeg"></div>
+    <div class="gap-info">
+      <div class="gi"><div class="gi-eye">Studierende</div><h3>Massenhafter Chat-Einsatz</h3><p>86–92 % nutzen KI, v.a. für Schreiben, Recherche und Erklärungen. Nutzung meist reaktiv und aufgabenbezogen – kaum Prompt Engineering.</p></div>
+      <div class="gi"><div class="gi-eye">Lehrende</div><h3>Zögerlicher Einstieg</h3><p>61 % haben KI erprobt, 88 % davon nur minimal. 40 % schätzen sich selbst als KI-Einsteiger ein. 80 % vermissen klare institutionelle Orientierung.</p></div>
+      <div class="gi"><div class="gi-eye">Institutionen</div><h3>Strategische Anfänge</h3><p>66 % haben KI institutionsweit adoptiert. 43 % haben KI im Strategieplan. Agentische Systeme kaum institutionalisiert.</p></div>
+    </div>
+    <div class="sec-src" style="margin-top:20px;">
+      <span class="ss"><em>Digital Education Council (2024).</em> Global AI Student Survey 2024.</span>
+      <span class="ss"><em>Digital Education Council (2025).</em> Global AI Faculty Survey 2025.</span>
+      <span class="ss"><em>HEPI (2025).</em> Student Generative AI Survey 2025.</span>
+      <span class="ss"><em>Ellucian (2025).</em> Higher Education Technology Trends.</span>
+    </div>
+  </div>
+</section>
+
+<!-- LERNEN: Metakognition -->
+<div class="learn-band" style="background:rgba(13,148,136,0.08);border-top:1px solid rgba(13,148,136,0.15);border-bottom:1px solid rgba(13,148,136,0.15);">
+  <div class="c">
+    <div class="lb-badge" style="background:rgba(13,148,136,0.1);color:var(--cteal);display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 11px;border-radius:100px;margin-bottom:10px;">Metakognition · Nicht bewertet</div>
+    <div class="lb-title">Und jetzt du: Wo steht deine Institution?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
+      <div>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:12px;font-weight:500;">Auf welcher Stufe agiert deine Hochschule oder Organisation hauptsächlich?</p>
+        <div class="stg-sel" id="q6-sel">
+          <button class="stg-btn" onclick="selStg(this,'q6')">💬 Chat</button>
+          <button class="stg-btn" onclick="selStg(this,'q6')">📐 Prompt Eng.</button>
+          <button class="stg-btn" onclick="selStg(this,'q6')">🧩 Custom GPTs</button>
+          <button class="stg-btn" onclick="selStg(this,'q6')">🤖 Agenten</button>
+          <button class="stg-btn" onclick="selStg(this,'q6')">🕸️ Netzwerke</button>
+          <button class="stg-btn" onclick="selStg(this,'q6')">🎯 Skills</button>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:10px;font-weight:500;">Was überrascht dich an der Adoptionslücke? Notiere einen Gedanken.</p>
+        <textarea class="reflect-ta" id="r-gap" placeholder="Deine Beobachtung …" oninput="autosave('r-gap','r-gap-c')"></textarea>
+        <span class="save-confirm" id="r-gap-c">✓ Gespeichert</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LEITGEDANKEN ═══ -->
+<section class="opp-s s" data-slide="5">
+  <div class="c">
+    <div class="eyebrow">Prinzipien &amp; Orientierung</div>
+    <h2>Sechs Leitgedanken für die Hochschule</h2>
+    <p class="intro">Keine Checkliste, keine Rezepte – sondern Denkangebote. Was wären die richtigen Fragen, bevor Maßnahmen entschieden werden?</p>
+    <div class="opp-grid" id="oppGrid"></div>
+    <div class="sec-src" style="margin-top:20px;">
+      <span class="ss"><em>Rogers, E. M. (2003).</em> Diffusion of Innovations, 5. Aufl. Free Press. [Diffusionskurve, Einsteiger-Konzept]</span>
+      <span class="ss"><em>Cisco (2025).</em> AI Readiness Index 2025. [Kulturelle Adoptionsfaktoren]</span>
+      <span class="ss"><em>McKinsey Global Institute (2025).</em> The State of AI in 2025. [Frontier vs. Ø-Unternehmen]</span>
+      <span class="ss"><em>Lan, Q. &amp; Zhou, W. (2025).</em> AI Adoption in Higher Education. Computers &amp; Education. [L&amp;D-Transferforschung]</span>
+    </div>
+  </div>
+</section>
+
+<!-- LERNEN: Multi-select -->
+<div class="learn-band" style="background:rgba(61,143,212,0.08);border-top:1px solid rgba(61,143,212,0.15);border-bottom:1px solid rgba(61,143,212,0.15);">
+  <div class="c">
+    <div class="lb-badge" style="background:rgba(61,143,212,0.1);color:var(--cblue);display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 11px;border-radius:100px;margin-bottom:10px;">Lernfrage 5 · Mehrfachauswahl</div>
+    <div class="qcard" id="q7">
+      <div class="qc-tag" style="background:rgba(61,143,212,0.1);color:var(--cblue);">Multi-Select</div>
+      <h4>Welche der sechs Prinzipien adressieren explizit das Problem, dass KI-Maßnahmen oft nur Enthusiast:innen erreichen? (Alle zutreffenden auswählen)</h4>
+      <div class="q-opts" id="q7-opts">
+        <button class="q-opt ms" data-correct="true" data-idx="0">Motivation statt Zwang</button>
+        <button class="q-opt ms" data-correct="true" data-idx="1">Mit den Skeptiker:innen beginnen</button>
+        <button class="q-opt ms" data-correct="true" data-idx="2">Flächenlicht statt Leuchtturm</button>
+        <button class="q-opt ms" data-correct="false" data-idx="3">Regelmäßige Impulse statt Schulungsereignisse</button>
+        <button class="q-opt ms" data-correct="false" data-idx="4">Orte des Lernens statt punktuelles Lehren</button>
+        <button class="q-opt ms" data-correct="false" data-idx="5">Von der Welt draußen lernen</button>
+      </div>
+      <button class="check-btn" id="q7-btn" onclick="checkMS('q7',[0,1,2])" disabled>Auswahl prüfen</button>
+      <div class="q-fb" id="q7-fb"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXKURS 1 ═══ -->
+<section class="exk" data-slide="6" style="background:#fff;border-top:1px solid rgba(30,28,40,0.08);">
+  <div class="exk-i">
+    <div class="eyebrow">Exkurs</div>
+    <h2 style="font-family:var(--serif);font-size:clamp(24px,3.5vw,38px);font-weight:600;margin-bottom:8px;">Die KI-Champion-Illusion</h2>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:36px;">Felix Schlenther, AI FIRST &middot; Mai 2026</p>
+    <div class="exk-grid">
+      <div>
+        <p>Felix Schlenther beschreibt ein Phänomen, das vielen KI-Adoptionsprogrammen bekannt ist: KI-Champions werden nominiert, starten motiviert, und versanden nach drei bis sechs Monaten – nicht weil die Menschen falsch sind, sondern weil die Rolle zu weich aufgesetzt ist: kein klares Mandat, keine dedizierte Zeit, keine Rückendeckung durch die Führungskraft.</p>
+        <p>Schlenthers Lösung ist das „KI-Enabler-Modell": ein Commitment Letter zwischen Enabler und Führungskraft, mindestens vier Stunden pro Woche, ein Quick Win pro Monat als Deliverable.</p>
+        <div class="exk-quote"><p>"Begeisterung ist ein guter Startpunkt, aber kein Mandat. Wer KI in den Fachbereich tragen soll, braucht Zeit, Rückhalt und klare Ziele."</p><small>Felix Schlenther, AI FIRST (2026)</small></div>
+        <p>Der entscheidende Befund: Der Unterschied in der Wirkung verschiedener Enabler lag nicht am Training – er lag daran, ob die Führungskraft aktiv Zeit freigegeben und Ziele nachgehalten hatte, oder nicht.</p>
+      </div>
+      <div>
+        <h3>Übertragung auf Hochschulen</h3>
+        <p>Die Diagnose trifft. Was Schlenther beschreibt, entspricht dem, was auch in Hochschulen passiert, wenn einzelne Enthusiasten ohne strukturelle Einbettung das Thema tragen sollen.</p>
+        <p>Der Commitment Letter lässt sich nicht direkt übertragen – Freiheit der Lehre ist kein Vorwand, sondern ein reales professionelles Selbstverständnis. Was übertragbar ist, ist die strukturelle Logik: Es braucht jemanden in einer Leitungsfunktion, der aktiv Raum schafft.</p>
+        <p>Schlenther empfiehlt, bei der Auswahl nicht nur auf Begeisterung zu schauen, sondern auf Prozessnähe und Vertrauen im Team. Die überzeugendsten Multiplikatoren sind oft nicht die lautesten, sondern die, denen andere im Alltag ohnehin zuhören.</p>
+      </div>
+    </div>
+    <div class="sec-src" style="margin-top:24px;">
+      <span class="ss"><em>Schlenther, F. (2026, Mai).</em> Die KI-Champion-Illusion. AI FIRST Insights. ai-first.ai/insights/die-ki-champion-illusion</span>
+    </div>
+  </div>
+</section>
+
+<!-- LERNEN: MC Exkurs 1 -->
+<div class="learn-band" style="background:rgba(234,109,58,0.08);border-top:1px solid rgba(234,109,58,0.15);border-bottom:1px solid rgba(234,109,58,0.15);">
+  <div class="c">
+    <div class="lb-badge" style="background:rgba(234,109,58,0.1);color:var(--corange);display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 11px;border-radius:100px;margin-bottom:10px;">Lernfrage 6 · Anwendung</div>
+    <div class="qcard" id="q8">
+      <div class="qc-tag" style="background:rgba(234,109,58,0.1);color:var(--corange);">Transfer</div>
+      <h4>Schlenthers zentraler Befund: Was machte den größten Unterschied zwischen wirksamen und unwirksamen KI-Enablern?</h4>
+      <div class="q-opts">
+        <button class="q-opt" onclick="answerMC('q8',this,false,'Technisches Wissen war zwischen den Gruppen kaum verschieden – es lag woanders.')">Das technische KI-Wissen der Person</button>
+        <button class="q-opt" onclick="answerMC('q8',this,false,'Begeisterung war der Ausgangspunkt, aber nicht das entscheidende Kriterium.')">Die persönliche Begeisterung und Eigeninitiative</button>
+        <button class="q-opt" onclick="answerMC('q8',this,true,'Richtig. Das Training war für alle gleich – den Unterschied machte die Führungskraft, die aktiv Zeit freigab und Ziele nachverfolgte.')">Die strukturelle Unterstützung durch die direkte Führungskraft</button>
+        <button class="q-opt" onclick="answerMC('q8',this,false,'Das Training war für alle Enabler gleich – das war gerade der entscheidende Punkt in Schlenthers Studie.')">Dauer und Qualität der KI-Ausbildung</button>
+      </div>
+      <div class="q-fb" id="q8-fb"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXKURS 2 ═══ -->
+<section class="exk" data-slide="7" style="background:var(--bg);border-top:1px solid rgba(30,28,40,0.08);">
+  <div class="exk-i">
+    <div class="eyebrow">Exkurs</div>
+    <h2 style="font-family:var(--serif);font-size:clamp(24px,3.5vw,40px);font-weight:600;margin-bottom:36px;max-width:700px;line-height:1.2;">Was wäre eine AI&#8209;First Frontier University?</h2>
+    <div class="exk-grid">
+      <div>
+        <p style="font-family:var(--serif);font-size:18px;font-style:italic;color:var(--muted);line-height:1.7;margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid var(--border);">"AI First" ist keine Strategie. Es ist eine Haltung zu der Frage, was der Ausgangspunkt ist.</p>
+        <h3>Was "AI First" bedeutet</h3>
+        <p>Das Konzept fragt: Wie würde diese Hochschule aussehen, wenn sie von Anfang an für eine Welt entworfen wäre, in der KI so selbstverständlich ist wie das Internet? Nicht KI als gelegentliches Werkzeug, sondern KI als erster Blick auf jede Aufgabe, jeden Prozess, jede Entscheidung.</p>
+        <h3>Die eigentliche Spannung</h3>
+        <p>Die Humboldtsche Universität verstand Bildung als Prozess, der Widerstand braucht. AI First bedeutet nicht, diesen Widerstand zu eliminieren. Es bedeutet, ihn dorthin zu verschieben, wo er zählt: zu den Fragen, die wirklich schwer sind und es auch mit KI bleiben.</p>
+      </div>
+      <div class="exk-side">
+        <p style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;color:var(--muted);margin-bottom:14px;">Merkmale</p>
+        <div class="exk-feat"><h4>KI-Kompetenz ist so selbstverständlich wie Schreiben</h4><p>Nicht als Fach, sondern als eingebettete Praxis in allen Studiengängen.</p></div>
+        <div class="exk-feat"><h4>Lehrende haben Zeit für das Irreplaceable</h4><p>Mentoring, Urteilsbildung, das Gespräch über schwierige Fragen.</p></div>
+        <div class="exk-feat"><h4>Die Institution lernt über sich selbst</h4><p>Wirkungsforschung als Mechanismus der lernenden Organisation.</p></div>
+        <div class="exk-feat" style="border-bottom:1px solid var(--border);padding-bottom:18px;"><h4>Sie gestaltet, statt zu konsumieren</h4><p>Sie trägt dazu bei, wie KI sich entwickelt, nicht nur wie sie genutzt wird.</p></div>
+        <div class="exk-final"><p>"Die entscheidende Frage ist nicht: Sind wir dort? Sondern: In welche Richtung bewegen wir uns?"</p></div>
+      </div>
+    </div>
+    <div class="sec-src" style="margin-top:24px;">
+      <span class="ss"><em>OECD (2025).</em> The Adoption of Artificial Intelligence in Firms. OECD Science, Technology and Industry Policy Papers. [Frontier-Konzept]</span>
+      <span class="ss"><em>McKinsey Global Institute (2025).</em> The State of AI in 2025. [Frontier vs. Ø-Unternehmen]</span>
+      <span class="ss"><em>Shimabukuro, A. (2026).</em> AI-First Higher Education. IntuitionLabs. [Frontier University Konzept]</span>
+    </div>
+  </div>
+</section>
+
+<!-- LERNEN: Reflexion -->
+<div class="learn-band" style="background:var(--accent-dim);border-top:1px solid var(--accent-b);border-bottom:1px solid var(--accent-b);">
+  <div class="c">
+    <div class="lb-badge" style="background:rgba(202,140,30,0.15);color:var(--accent);display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 11px;border-radius:100px;margin-bottom:10px;">Reflexion · Abschluss</div>
+    <div class="lb-title">Was nimmst du mit?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;">
+      <div>
+        <p style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:9px;">Welches Merkmal der Frontier University ist in deiner Institution bereits ansatzweise vorhanden?</p>
+        <textarea class="reflect-ta" id="r-frontier" placeholder="Deine Reflexion …" oninput="autosave('r-frontier','r-frontier-c')"></textarea>
+        <span class="save-confirm" id="r-frontier-c">✓ Gespeichert</span>
+      </div>
+      <div>
+        <p style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:9px;">Was wäre dein erster konkreter Schritt in den nächsten 30 Tagen?</p>
+        <textarea class="reflect-ta" id="r-step" placeholder="Mein erster Schritt …" oninput="autosave('r-step','r-step-c')"></textarea>
+        <span class="save-confirm" id="r-step-c">✓ Gespeichert</span>
+      </div>
+    </div>
+    <button style="margin-top:20px;background:transparent;border:1.5px solid var(--accent);color:var(--accent);border-radius:9px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all 0.2s;" onmouseover="this.style.background='var(--accent)';this.style.color='#fff';" onmouseout="this.style.background='transparent';this.style.color='var(--accent)';" onclick="scrollToEval()">Zur Auswertung ↓</button>
+  </div>
+</div>
+
+<!-- ═══ EVALUATION ═══ -->
+<section class="eval-s" id="evalSec">
+  <div class="c">
+    <div class="eyebrow" style="color:rgba(202,140,30,0.8);">Auswertung</div>
+    <h2>Deine Lerneinheit im Überblick</h2>
+    <p class="eval-intro">Ergebnisse der bewerteten Fragen und eine Sammlung deiner Reflexionen.</p>
+    <button class="eval-btn" id="evalBtn" onclick="showEval()">Auswertung anzeigen</button>
+    <div class="score-card" id="scoreCard">
+      <div class="score-ring" id="scoreRing">–</div>
+      <div class="score-sub" id="scoreSub">von 6 Fragen</div>
+      <div class="score-bar-wrap"><div class="score-bar-fill" id="scoreBar" style="width:0%"></div></div>
+      <div class="score-msg" id="scoreMsg"></div>
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.38);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:none;" id="revLabel">Aufgabe für Aufgabe</div>
+    <div class="rev-grid" id="revGrid"></div>
+    <div class="eval-refs" id="evalRefs">
+      <h3>Deine Reflexionen</h3>
+      <div class="eval-ref-grid">
+        <div class="eval-ref-box"><h4>Adoptionslücke: Was überrascht dich?</h4><div class="eval-ref-text" id="er-gap"></div></div>
+        <div class="eval-ref-box"><h4>Frontier University: Was siehst du bereits?</h4><div class="eval-ref-text" id="er-frontier"></div></div>
+        <div class="eval-ref-box"><h4>Dein 30-Tage-Schritt</h4><div class="eval-ref-text" id="er-step"></div></div>
+        <div class="eval-ref-box"><h4>Freie Notiz</h4><textarea class="free-ta" id="er-free" placeholder="Was noch …"></textarea></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOURCES -->
+<footer class="src-s">
+  <div class="c">
+    <h3>Quellen &amp; weiterführende Literatur</h3>
+    <div class="src-grid">
+      <div class="src-item"><em>Digital Education Council (2025).</em> Global AI Faculty Survey 2025.</div>
+      <div class="src-item"><em>Digital Education Council (2024).</em> Global AI Student Survey 2024.</div>
+      <div class="src-item"><em>HEPI (2025).</em> Student Generative AI Survey 2025.</div>
+      <div class="src-item"><em>Schlenther, F. (2026, Mai).</em> Die KI-Champion-Illusion. AI FIRST Insights.</div>
+      <div class="src-item"><em>Anthropic (2024, Nov.).</em> Introducing the Model Context Protocol.</div>
+      <div class="src-item"><em>McKinsey Global Institute (2025).</em> The State of AI in 2025.</div>
+      <div class="src-item"><em>Cisco (2025).</em> AI Readiness Index 2025.</div>
+      <div class="src-item"><em>OECD (2025).</em> The Adoption of Artificial Intelligence in Firms.</div>
+    </div>
+    <div class="src-note">Stand Mai 2026 · Eine Datei, kein Server erforderlich · Reflexionen bleiben im Browser</div>
+  </div>
+</footer>
+
+<!-- GEAR + TOGGLE -->
+<div id="gear-wrap">
+  <div id="gear-btn" onclick="gearClick()" title="Modus wechseln">⚙</div>
+  <div id="mode-toggle" onclick="togglePres()" title="P – Modus wechseln">
+    <span id="lbl-l">Lernmodus</span>
+    <div id="ttrack"><div id="tknob"></div></div>
+    <span id="lbl-p">Präsentation</span>
+  </div>
+</div>
+
+<!-- TIMELINE MODAL -->
+<div id="tl-modal" onclick="if(event.target===this)closeTlModal()">
+  <div id="tlm-card">
+    <div id="tlm-head">
+      <div id="tlm-icon"></div>
+      <div style="flex:1;min-width:0;"><div id="tlm-tag"></div><div id="tlm-title"></div><div id="tlm-period"></div></div>
+      <button id="tlm-close" onclick="closeTlModal()">✕</button>
+    </div>
+    <div id="tlm-body">
+      <div id="tlm-left"><h4>Was passierte?</h4><p id="tlm-what"></p><h4 style="margin-top:16px;">Bedeutung für die Hochschullehre</h4><p id="tlm-edu"></p><div id="tlm-fact-box"><p id="tlm-fact"></p></div></div>
+      <div id="tlm-right"><h4>Chancen für Hochschulen</h4><ul id="tlm-opps"></ul><h4>Adoption (Schätzung)</h4><div id="tlm-adopt-rows"></div></div>
+    </div>
+    <div id="tlm-nav"><button class="tlm-arr" onclick="tlModalNav(-1)">←</button><span id="tlm-ctr"></span><button class="tlm-arr" onclick="tlModalNav(1)">→</button></div>
+    <div id="tlm-src" class="sec-src on-dark" style="padding:10px 30px 14px;display:none;border-top:1px solid rgba(255,255,255,0.07);"></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lb" onclick="if(event.target===this)closeLb()">
+  <div id="lb-card">
+    <div class="lb-arr" onclick="lbNav(-1)">←</div>
+    <div id="lb-content"><div id="lb-tag"></div><div id="lb-title"></div><div id="lb-body"></div></div>
+    <div class="lb-arr" onclick="lbNav(1)">→</div>
+  </div>
+  <div id="lb-footer"><span id="lb-ctr"></span><button id="lb-close" onclick="closeLb()">✕ &nbsp;Schließen <span style="opacity:0.4;font-size:11px;">ESC</span></button></div>
+</div>
+
+<script>
+// ══════════════════════════════════
+//  DATA
+// ══════════════════════════════════
+const stages = [
+  {id:'chat',date:'Nov 2022',title:'Chat-Ära',sub:'ChatGPT & erste Interaktion',color:'#3D8FD4',colorDim:'rgba(61,143,212,0.12)',icon:'💬',period:'30. November 2022 – Frühjahr 2023',what:'Am 30. November 2022 veröffentlichte OpenAI ChatGPT. In fünf Tagen: 1 Million Nutzer:innen. In zwei Monaten: 100 Millionen – schneller als jedes Produkt vor ihm. ChatGPT machte Sprachmodelle erstmals für alle zugänglich: ohne Code, ohne Vorkenntnisse.',edu:'Schlagartig hatten Studierende ein mächtiges Werkzeug für Textentwürfe, Recherche und Erklärungen. Hochschulen reagierten zunächst mit Verunsicherung: Verbote, Plagiat-Debatten, Abwarten. Auf dieser Ebene befinden sich heute noch die meisten Studierenden und Lehrenden.',opps:['KI als Sokrates-Methode: Gegenfragen statt Antworten fordern','Lernfragen und Quiz aus Vorlesungsfolien generieren lassen','Schwierige Konzepte in einfacher Sprache erklären lassen','Sprachbarrieren für internationale Studierende abbauen'],adopt:[{l:'Studierende',v:90},{l:'Lehrende',v:55},{l:'EdTech-Tools',v:95}],fact:'100 Millionen Nutzer in 60 Tagen – kein Produkt wuchs je schneller. ChatGPT hat heute über 700 Mio. wöchentliche Nutzer:innen.'},
+  {id:'prompts',date:'Früh 2023',title:'Prompt Engineering',sub:'Mega-Prompts & Systemprompts',color:'#8B5CF6',colorDim:'rgba(139,92,246,0.12)',icon:'📐',period:'März 2023 – Sommer 2023',what:'Mit GPT-4 und Systemprompts erkannten Frühanwender:innen: Die Qualität der KI-Ausgabe hängt massiv von der Qualität der Eingabe ab. Mega-Prompts (detaillierte Anweisungen mit Persona, Kontext, Beispielen) wurden zum Standard.',edu:'Prompt Literacy wurde zur Grundkompetenz. Hochschulen, die KI aktiv integrierten, erkannten: Studierende müssen lernen, gute Fragen zu stellen. Hier setzen heute die meisten Hochschulworkshops an.',opps:['Prompt Literacy als Modul oder Onboarding-Workshop','Kurs-Systemprompts entwickeln und als Lehrressource teilen','Kritische Bewertung von KI-Outputs als Studienziel verankern'],adopt:[{l:'Studierende',v:38},{l:'Lehrende',v:22},{l:'EdTech-Tools',v:72}],fact:'40 % der beliebtesten Kurse auf Coursera thematisieren KI – eine Anmeldung alle 10 Sekunden. (AWS Education Report, 2025)'},
+  {id:'customgpts',date:'Nov 2023',title:'Custom GPTs',sub:'No-Code KI & GPT Store',color:'#0D9488',colorDim:'rgba(13,148,136,0.12)',icon:'🧩',period:'November 2023 – Januar 2024',what:'Am 6. November 2023 kündigte OpenAI Custom GPTs an. Am 10. Januar 2024 öffnete der GPT Store. Bis Ende Januar 2024 wurden über 3 Millionen Custom GPTs erstellt – kein Code erforderlich.',edu:'EdTech-Unternehmen und Hochschulen begannen, spezialisierte Lern-Assistenten zu bauen. Der Vorteil: Domänenwissen einmal kodiert, von allen Studierenden nutzbar.',opps:['Kursbegleitende GPTs als digitale Lernassistenten','Simulations-Partner für Rollenspiele (Arzt-Patient, juristische Verhandlung)','Repetitive Betreuungsaufgaben teilautomatisieren'],adopt:[{l:'Studierende',v:22},{l:'Lehrende',v:12},{l:'EdTech-Tools',v:78}],fact:'In weniger als 3 Monaten: über 3 Millionen Custom GPTs erstellt.',src:'OpenAI (2024). GPT Store Launch Announcement. · SaM Solutions (2025). AI Adoption in Education Report.'},
+  {id:'agents',date:'Ab Apr. 2023',title:'KI-Agenten',sub:'Autonome Systeme',color:'#EA6D3A',colorDim:'rgba(234,109,58,0.12)',icon:'🤖',period:'April 2023 (Start) – 2024 (Durchbruch)',what:'AutoGPT startete im April 2023: Ein KI-System, das sich selbst Teilaufgaben stellt, diese abarbeitet und iteriert. Der eigentliche Durchbruch kam 2024 durch Frameworks wie LangChain, CrewAI und Microsoft AutoGen.',edu:'Die L&D-Diskussion hat diese Ebene erreicht; tatsächliche Hochschulnutzung ist noch die Ausnahme. Agenten könnten Lehrende entlasten: automatisches erstes Feedback, adaptive Lernpfade.',opps:['Automatisches erstes Feedback auf Studierendenarbeiten','Adaptive Lernpfade: Agent passt Schwierigkeit laufend an','KI-Forschungsassistenten für Literaturrecherche'],adopt:[{l:'Studierende',v:6},{l:'Lehrende',v:4},{l:'EdTech-Tools',v:28}],fact:'83 % der befragten Großunternehmen hatten 2025 Pläne für agentische KI.',src:'Cisco (2025). AI Readiness Index 2025. · Element451 / ASU+GSV Summit (2025). AI Agents in Higher Ed.'},
+  {id:'networks',date:'Nov 2024',title:'Agentennetzwerke',sub:'MCP & Multi-Agent-Systeme',color:'#C94F7A',colorDim:'rgba(201,79,122,0.12)',icon:'🕸️',period:'November 2024 – 2025',what:'Im November 2024 veröffentlichte Anthropic das Model Context Protocol (MCP): ein offener Standard, der KI-Modellen ermöglicht, standardisiert auf externe Tools, Datenbanken und APIs zuzugreifen. Im Dezember 2025 unter der Linux Foundation verankert.',edu:'Erste vielversprechende Universitätsprojekte: automatisierte Studienberatungs-Agenten, Multi-Agenten-Systeme für Enrollment-Management. Institutionelle Implementierungen sind noch sehr selten.',opps:['Automatisierte Erstberatung via Agentennetzwerke','Vernetzung von LMS, Bibliotheksdatenbanken und KI-Tutoren','Institutionelle KI-Strategie für Standards entwickeln'],adopt:[{l:'Studierende',v:2},{l:'Lehrende',v:2},{l:'EdTech-Tools',v:18}],fact:'MCP wurde von nahezu allen großen KI-Anbietern innerhalb von 12 Monaten adoptiert.',src:'Anthropic (2024, Nov.). Introducing the Model Context Protocol. · Thoughtworks (2025). Technology Radar. · Linux Foundation (2025). MCP Standard Announcement.'},
+  {id:'skills',date:'Okt 2025',title:'Skills',sub:'Kodiertes Prozesswissen',color:'#4CAF50',colorDim:'rgba(76,175,80,0.12)',icon:'🎯',period:'Ab Oktober 2025 (aktuell)',what:'Am 16. Oktober 2025 stellte Anthropic „Agent Skills" vor: paketierte, wiederverwendbare Workflows, die einem KI-Agenten domänenspezifisches Prozesswissen beibringen. Skills sind komplementär zu MCP.',edu:'Diese Entwicklung ist für Hochschulen besonders relevant: Lehrendes Erfahrungswissen könnte erstmals systematisch als KI-Skill kodiert und skaliert werden. Adoption: praktisch nicht vorhanden – das ist Chance und Einladung.',opps:['Didaktisches Erfahrungswissen als KI-Skills kodieren','Skill-Bibliotheken für Standard-Lehraufgaben erstellen','Institutionell geprüfte Skills als Qualitätsmerkmal entwickeln'],adopt:[{l:'Studierende',v:1},{l:'Lehrende',v:1},{l:'EdTech-Tools',v:6}],fact:'Skills sind seit Oktober 2025 verfügbar. Hier liegen enorme ungenutzte Potenziale für den Bildungsbereich.',src:'Anthropic (2025, Okt.). Agent Skills – Pressemitteilung. · agentskills.io (2025/26). Open Standard Documentation.'}
+];
+
+const opps = [
+  {tag:'Prinzip 1',accent:'#3D8FD4',tagBg:'rgba(61,143,212,0.1)',title:'Motivation statt Zwang',paras:['Menschen lernen nicht, weil sie müssen. Sie lernen, wenn sie spüren, dass etwas für sie persönlich nützlich ist. Im Hochschulkontext ist Zwang nicht nur wirkungslos, sondern kontraproduktiv – er erzeugt Reaktanz, also genau das Gegenteil.','Die entscheidende Designfrage lautet: Wie machen wir den Nutzen so spürbar, dass der erste Schritt attraktiver ist als das Nichtstun? Das ist ein fundamentaler Unterschied, der verändert, welche Maßnahmen sinnvoll sind.']},
+  {tag:'Prinzip 2',accent:'#8B5CF6',tagBg:'rgba(139,92,246,0.1)',title:'Mit den Skeptiker:innen beginnen',paras:['Wer Formate für Enthusiast:innen designt, braucht sich um Enthusiast:innen keine Sorgen zu machen – die finden KI-Tools sowieso. Die strategisch entscheidende Zielgruppe sind die Menschen mit den höchsten Hemmschwellen.','Was diese Gruppe braucht, ist nicht Begeisterung, sondern Relevanz. Ein Format, das für Skeptiker:innen funktioniert, funktioniert für alle. Umgekehrt gilt das nicht.']},
+  {tag:'Prinzip 3',accent:'#0D9488',tagBg:'rgba(13,148,136,0.1)',title:'Flächenlicht statt Leuchtturm',paras:['Leuchtturmprojekte sind beeindruckend. Das Problem: Sie sind selten übertragbar und wirken auf Skeptiker:innen eher abschreckend als einladend. Wer den eigenen Lehrpreis betrachtet und denkt „das könnte ich nie", lernt das Falsche.','Was in der Breite wirkt: schlanke, unspektakuläre Lösungen, die in bestehende Workflows passen. Ein Werkzeug, das 50 Lehrenden wöchentlich zehn Minuten spart, schafft mehr kumulierte Wirkung als ein brillantes Nischenprojekt.']},
+  {tag:'Prinzip 4',accent:'#EA6D3A',tagBg:'rgba(234,109,58,0.1)',title:'Regelmäßige Impulse statt Schulungsereignisse',paras:['Einmalige Workshops verändern selten dauerhaft, was Menschen tun. Transfer gelingt, wenn Lernen nah an der Anwendung stattfindet, wiederholbar ist und in vertrauten Kontexten verankert wird.','Wirksamer sind regelmäßige, kleine Impulse im gewohnten Kontext: ein Peer, der nebenbei erzählt, was ihm geholfen hat. Nicht Masse, sondern Regelmäßigkeit und Einbettung.']},
+  {tag:'Prinzip 5',accent:'#C94F7A',tagBg:'rgba(201,79,122,0.1)',title:'Orte des Lernens statt punktuelles Lehren',paras:['Es gibt einen grundlegenden Unterschied zwischen einem Ort, an dem unterrichtet wird, und einem Ort, an dem gelernt werden kann. Im zweiten bestimmen die Lernenden: wann, mit wem, in welchem Tempo.','Peer-Exchange-Formate sind dabei besonders wirkungsvoll. Multiplikatoren müssen keine KI-Expert:innen sein. Die Frage ist nicht, wer am meisten weiß, sondern wer gehört wird.']},
+  {tag:'Prinzip 6',accent:'#CA8C1E',tagBg:'rgba(202,140,30,0.1)',title:'Von der Welt draußen lernen',paras:['Hochschulen sind keine Unternehmen, aber sie können von denen lernen, die ähnliche Adoptionsprobleme schneller lösen. Frontier-Unternehmen unterscheiden sich nicht durch bessere Technologie, sondern durch eine andere Kultur.','Das Konzept einer „Agent-o-Thek" – ein kuratiertes Angebot spezialisierter Agenten für alle Mitarbeitenden – ist genau diese Art von Transfer. Und auch eine KI-Policy entsteht am besten parallel zur Praxis, nicht davor.']}
+];
+
+// ══════════════════════════════════
+//  TIMELINE RENDERING
+// ══════════════════════════════════
+const tlNodes = document.getElementById('tlNodes');
+stages.forEach((s,i) => {
+  const n = document.createElement('div');
+  n.className = 'tnode';
+  n.innerHTML = `<div class="tnode-date">${s.date}</div><div class="tnode-circ" style="border-color:${s.color};color:${s.color};">${s.icon}</div><div class="tnode-name">${s.title}</div><div class="tnode-sub">${s.sub}</div>`;
+  n.addEventListener('click', () => selectStage(i));
+  tlNodes.appendChild(n);
+});
+
+function srcBlock(src, dark=true) {
+  const cls = dark ? 'sec-src on-dark' : 'sec-src';
+  return src ? `<div class="${cls}" style="margin-top:16px;">${src.split(' · ').map(s=>`<span class="ss"><em>${s}</em></span>`).join('')}</div>` : '';
+}
+
+function selectStage(idx) {
+  const s = stages[idx];
+  document.querySelectorAll('.tnode').forEach((n,i) => {
+    const active = i === idx;
+    n.classList.toggle('active', active);
+    const c = n.querySelector('.tnode-circ');
+    c.style.background = active ? stages[i].colorDim : 'rgba(255,255,255,0.04)';
+    c.style.boxShadow = active ? `0 0 0 8px ${stages[i].color}22` : '';
+  });
+  if (document.body.classList.contains('pres')) { openTlModal(idx); return; }
+  const rows = s.adopt.map(a => `<div class="adopt-row"><span class="adopt-lbl">${a.l}</span><div class="adopt-bg"><div class="adopt-fill" style="width:0%;background:${s.color};" data-t="${a.v}%"></div></div><span class="adopt-pct">${a.v} %</span></div>`).join('');
+  document.getElementById('dpInner').innerHTML = `
+    <div class="dp-head"><div class="dp-icon">${s.icon}</div><div><div class="dp-tag" style="color:${s.color};">Stufe ${idx+1} · ${s.period}</div><div class="dp-title">${s.title}</div><div class="dp-period">${s.sub}</div></div></div>
+    <div class="dp-body"><div class="dp-col"><h4>Was passierte?</h4><p>${s.what}</p><h4>Bedeutung für die Hochschullehre</h4><p>${s.edu}</p><div class="dp-fact"><p>${s.fact}</p></div></div>
+    <div class="dp-col"><h4>Chancen für Hochschulen</h4><ul class="olist">${s.opps.map(o=>`<li>${o}</li>`).join('')}</ul><div style="margin-top:20px;"><h4>Aktuelle Adoption</h4>${rows}</div></div></div>
+    ${srcBlock(s.src)}`;
+  const panel = document.getElementById('dp');
+  panel.classList.add('open');
+  setTimeout(() => { document.querySelectorAll('.adopt-fill').forEach(b => b.style.width=b.dataset.t); }, 60);
+}
+setTimeout(() => { if (!document.body.classList.contains('pres')) selectStage(0); }, 300);
+
+// ══════════════════════════════════
+//  SPECTRUM TABLE
+// ══════════════════════════════════
+const sLabels=['Chat','Prompts','Custom GPTs','Agenten','Netzwerke','Skills'];
+const sColors=['#3D8FD4','#8B5CF6','#0D9488','#EA6D3A','#C94F7A','#4CAF50'];
+const groups=[{n:'Studierende',p:[4,3,2,1,0,0]},{n:'Lehrende',p:[3,2,1,0,0,0]},{n:'EdTech-Tools',p:[1,2,4,2,1,0]},{n:'L&D Diskurs',p:[0,1,2,4,3,2]},{n:'Hochschulen (institutionell)',p:[4,1,1,0,0,0]},{n:'Ø Unternehmen',p:[2,2,3,3,1,0],sep:true},{n:'Frontier-Unternehmen',p:[0,0,1,3,4,3]}];
+const lvls=['','· Vereinzelt','○ Teilweise','◎ Stark','◉ Schwerpunkt'];
+const ops=[0.08,0.22,0.44,0.68,1];
+let th='<thead><tr><th style="width:200px;text-align:left;font-size:12px;color:var(--muted);font-weight:500;padding-bottom:12px;"></th>';
+sLabels.forEach((l,i)=>{th+=`<th style="text-align:center;font-size:11px;color:${sColors[i]};font-weight:600;text-transform:uppercase;letter-spacing:0.06em;padding-bottom:12px;">${l}</th>`;});
+th+='</tr></thead>';
+let tb='<tbody>';
+groups.forEach(g=>{
+  const sep=g.sep?'border-top:2px solid var(--border);':'';
+  tb+=`<tr><td style="${sep}font-size:13px;font-weight:${g.sep||g.n.includes('Frontier')?'600':'500'};padding-right:14px;white-space:nowrap;">${g.n}</td>`;
+  g.p.forEach((p,i)=>{tb+=`<td style="${sep}padding:5px 4px;vertical-align:middle;"><div class="sc" style="background:${sColors[i]};opacity:${ops[p]};">${p>0?lvls[p]:''}</div></td>`;});
+  tb+='</tr>';
+});
+tb+='</tbody>';
+document.getElementById('specTable').innerHTML=th+tb;
+document.getElementById('specLeg').innerHTML=lvls.slice(1).map(l=>`<span>${l}</span>`).join('');
+
+// ══════════════════════════════════
+//  OPP GRID
+// ══════════════════════════════════
+const oppGrid = document.getElementById('oppGrid');
+opps.forEach((o,i) => {
+  const c = document.createElement('div');
+  c.className = 'opp-card';
+  c.style.borderTopColor = o.accent;
+  c.innerHTML = `<div class="opp-tag" style="color:${o.accent};background:${o.tagBg};">${o.tag}</div><h3 style="color:${o.accent};">${o.title}</h3>${o.paras.map(p=>`<p class="od">${p}</p>`).join('')}`;
+  c.addEventListener('click', () => { if(document.body.classList.contains('pres')) openLb(i); });
+  oppGrid.appendChild(c);
+});
+
+// ══════════════════════════════════
+//  PROGRESS BAR (Lernen)
+// ══════════════════════════════════
+window.addEventListener('scroll', () => {
+  const h = document.body.scrollHeight - window.innerHeight;
+  if (h > 0) document.getElementById('prog-fill').style.width = (window.scrollY / h * 100) + '%';
+});
+
+// ══════════════════════════════════
+//  QUIZ STATE
+// ══════════════════════════════════
+const QA = {};
+const scoredIDs = ['q2','q3','q4','q5','q7','q8'];
+const qLabels = {q2:'Faktencheck: 88 % – wer nutzt KI minimal?',q3:'Lückentext: Agenten, MCP, Skills',q4:'Chronologische Reihenfolge der Meilensteine',q5:'AutoGPT: Wann veröffentlicht?',q7:'Welche Prinzipien adressieren das Enthusiasten-Problem?',q8:'Schlenthers zentraler Befund'};
+const qCorrect = {q2:'Falsch – diese Zahl bezieht sich auf Lehrende, nicht Studierende',q3:'Agenten, MCP, Skills (alle richtig)',q4:'ChatGPT → AutoGPT → Custom GPTs → MCP → Skills',q5:'Vor den Custom GPTs (April 2023)',q7:'Motivation statt Zwang, Mit den Skeptiker:innen beginnen, Flächenlicht statt Leuchtturm',q8:'Strukturelle Unterstützung durch Führungskraft'};
+
+function recordQ(id, correct, userAns) { QA[id] = {correct, userAns}; }
+
+// ── T/F
+function answerTF(id, btn, isCorrect) {
+  btn.closest('.qcard').querySelectorAll('.q-opt').forEach(b => b.disabled=true);
+  btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) btn.closest('.qcard').querySelectorAll('.q-opt').forEach(b => { if(b!==btn) b.classList.add('correct'); });
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'q-fb '+(isCorrect?'ok':'err'); fb.style.display='block';
+  fb.innerHTML = isCorrect
+    ? '✓ Richtig. Die 88 % beziehen sich auf <strong>Lehrende</strong>, die KI nur minimal nutzen. Studierende nutzen KI mit 86–92 % massenhaft.'
+    : '✗ Nicht ganz. Die 88 % beziehen sich auf die <strong>Lehrenden</strong> – nicht auf Studierende. Studierende sind mit 86–92 % eine der aktivsten Nutzergruppen.';
+  recordQ(id, isCorrect, btn.textContent.trim());
+}
+
+// ── MC
+function answerMC(id, btn, isCorrect, msg) {
+  btn.closest('.qcard').querySelectorAll('.q-opt').forEach(b => b.disabled=true);
+  btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) btn.closest('.qcard').querySelectorAll('.q-opt').forEach(b => { if(b.onclick&&b.onclick.toString().includes(',true,')) b.classList.add('correct'); });
+  const fb = document.getElementById(id+'-fb');
+  fb.className = 'q-fb '+(isCorrect?'ok':'err'); fb.style.display='block';
+  fb.textContent = (isCorrect?'✓ ':'✗ ') + msg;
+  recordQ(id, isCorrect, btn.textContent.trim());
+}
+
+// ── SELF-ASSESSMENT
+function selSelf(btn) {
+  document.querySelectorAll('#q1-sel .stg-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('q1-fb').style.display='block';
+}
+
+// ── MULTI-SELECT
+const q7sel = new Set();
+document.querySelectorAll('#q7-opts .q-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.disabled) return;
+    const idx = parseInt(btn.dataset.idx);
+    if (q7sel.has(idx)) { q7sel.delete(idx); btn.classList.remove('selected'); }
+    else { q7sel.add(idx); btn.classList.add('selected'); }
+    document.getElementById('q7-btn').disabled = q7sel.size===0;
+  });
+});
+function checkMS(id, correct) {
+  document.querySelectorAll('#q7-opts .q-opt').forEach(b => b.disabled=true);
+  const ok = correct.every(i=>q7sel.has(i)) && q7sel.size===correct.length;
+  document.querySelectorAll('#q7-opts .q-opt').forEach(btn => {
+    const i = parseInt(btn.dataset.idx);
+    if(correct.includes(i)) btn.classList.add('correct');
+    else if(q7sel.has(i)) btn.classList.add('wrong');
+  });
+  const fb = document.getElementById(id+'-fb');
+  fb.className='q-fb '+(ok?'ok':'err'); fb.style.display='block';
+  fb.innerHTML = ok ? '✓ Richtig! Die ersten drei Prinzipien adressieren alle explizit das Enthusiasten-Problem.'
+    : '✗ Fast. Die richtigen drei: Motivation statt Zwang, Mit den Skeptiker:innen beginnen, Flächenlicht statt Leuchtturm.';
+  recordQ(id, ok, [...q7sel]);
+}
+
+// ── DRAG THE WORDS
+(function initDTW(){
+  const card = document.getElementById('q3');
+  const words = card.querySelectorAll('.dtw-word');
+  const gaps = card.querySelectorAll('.dtw-gap');
+  const btn = document.getElementById('q3-btn');
+  words.forEach(w => {
+    w.addEventListener('dragstart', e => { e.dataTransfer.setData('text',w.dataset.word); setTimeout(()=>w.classList.add('dragging'),0); });
+    w.addEventListener('dragend', () => w.classList.remove('dragging'));
+  });
+  gaps.forEach(gap => {
+    gap.addEventListener('dragover', e => { e.preventDefault(); gap.classList.add('over'); });
+    gap.addEventListener('dragleave', () => gap.classList.remove('over'));
+    gap.addEventListener('drop', e => {
+      e.preventDefault(); gap.classList.remove('over');
+      const word = e.dataTransfer.getData('text');
+      if (gap.dataset.filled) {
+        const prev = card.querySelector(`.dtw-word[data-word="${gap.dataset.filled}"]`);
+        if (prev) prev.classList.remove('used');
+      }
+      const src = card.querySelector(`.dtw-word[data-word="${word}"]`);
+      if (src) src.classList.add('used');
+      gap.textContent = word; gap.dataset.filled = word; gap.classList.add('filled');
+      btn.disabled = !Array.from(gaps).every(g=>g.dataset.filled);
+    });
+    gap.addEventListener('click', () => {
+      if (gap.dataset.filled && !gap.classList.contains('correct') && !gap.classList.contains('wrong')) {
+        const prev = card.querySelector(`.dtw-word[data-word="${gap.dataset.filled}"]`);
+        if (prev) prev.classList.remove('used');
+        gap.textContent='___'; delete gap.dataset.filled; gap.classList.remove('filled');
+        btn.disabled = true;
+      }
+    });
+  });
+})();
+
+function checkDTW(id) {
+  const card = document.getElementById(id);
+  const gaps = card.querySelectorAll('.dtw-gap');
+  let ok = true;
+  gaps.forEach(g => { const c=g.dataset.filled===g.dataset.answer; g.classList.remove('filled'); g.classList.add(c?'correct':'wrong'); if(!c) ok=false; });
+  card.querySelectorAll('.dtw-word').forEach(w=>w.setAttribute('draggable','false'));
+  const fb = document.getElementById(id+'-fb');
+  fb.className='q-fb '+(ok?'ok':'err'); fb.style.display='block';
+  fb.textContent = ok ? '✓ Alle drei Lücken richtig! Agenten = autonome Systeme, MCP = Verbindungsstandard, Skills = Prozess-Pakete.'
+    : '✗ Nicht alle Lücken stimmen. Richtig: Agenten (autonome Systeme) · MCP (Tool-Verbindungsstandard) · Skills (Prozess-Pakete). Klick auf Lücke → zurücksetzen.';
+  recordQ(id, ok, Object.fromEntries(Array.from(gaps).map(g=>[g.dataset.answer,g.dataset.filled])));
+}
+
+// ── SORT
+(function initSort(){
+  const list = document.getElementById('q4-list');
+  let dragged = null;
+  list.querySelectorAll('.sort-item').forEach(item => {
+    item.addEventListener('dragstart', e => { dragged=item; setTimeout(()=>item.classList.add('dragging'),0); e.dataTransfer.effectAllowed='move'; });
+    item.addEventListener('dragend', () => { if(dragged) dragged.classList.remove('dragging'); dragged=null; });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      if(!dragged||dragged===item) return;
+      const r=item.getBoundingClientRect();
+      e.clientY < r.top+r.height/2 ? list.insertBefore(dragged,item) : list.insertBefore(dragged,item.nextSibling);
+    });
+  });
+})();
+
+function checkSort(id, correct) {
+  const card = document.getElementById(id);
+  const items = card.querySelectorAll('.sort-item');
+  let ok = true; const ua=[];
+  items.forEach((item,i) => {
+    item.setAttribute('draggable','false'); ua.push(item.dataset.id);
+    const c=item.dataset.id===correct[i];
+    item.classList.add(c?'correct':'wrong');
+    item.querySelector('.sort-num').textContent=i+1;
+    if(!c) ok=false;
+  });
+  const fb=document.getElementById(id+'-fb');
+  fb.className='q-fb '+(ok?'ok':'err'); fb.style.display='block';
+  fb.innerHTML = ok ? '✓ Perfekt! ChatGPT (Nov 2022) → AutoGPT (Apr 2023) → Custom GPTs (Nov 2023) → MCP (Nov 2024) → Skills (Okt 2025).'
+    : '✗ Nicht ganz. Korrekte Reihenfolge: <strong>1.</strong> ChatGPT (Nov 2022) <strong>2.</strong> AutoGPT (Apr 2023) <strong>3.</strong> Custom GPTs (Nov 2023) <strong>4.</strong> MCP (Nov 2024) <strong>5.</strong> Skills (Okt 2025). Beachte: AutoGPT kam vor Custom GPTs!';
+  recordQ(id, ok, ua);
+}
+
+// ── STAGE SELECTORS
+function selStg(btn, group) {
+  btn.closest('.stg-sel').querySelectorAll('.stg-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+// ── AUTOSAVE REFLECTIONS
+function autosave(taId, confirmId) {
+  clearTimeout(window['_as_'+taId]);
+  window['_as_'+taId] = setTimeout(() => {
+    const el = document.getElementById(confirmId);
+    if (el) { el.style.display='inline'; setTimeout(()=>el.style.display='none',1800); }
+  }, 700);
+}
+
+// ══════════════════════════════════
+//  EVALUATION
+// ══════════════════════════════════
+function scrollToEval() {
+  document.getElementById('evalSec').scrollIntoView({behavior:'smooth'});
+  setTimeout(showEval, 700);
+}
+
+function showEval() {
+  document.getElementById('evalBtn').style.display='none';
+  const correct = scoredIDs.filter(id => QA[id]?.correct).length;
+  const total = scoredIDs.length;
+  const pct = Math.round(correct/total*100);
+
+  const sc = document.getElementById('scoreCard'); sc.classList.add('show');
+  document.getElementById('scoreRing').textContent = `${correct} / ${total}`;
+  document.getElementById('scoreSub').textContent = `von ${total} bewerteten Fragen richtig`;
+  setTimeout(() => document.getElementById('scoreBar').style.width=pct+'%', 100);
+  const msgs = ['Guter Einstieg! Lies die Erklärungen durch und schau nochmals rein.','Solider Einstieg – die wesentlichen Zusammenhänge sind da.','Gut gemacht. Die Konzepte sitzen.','Sehr gut – fundiertes Verständnis der KI-Entwicklung.','Ausgezeichnet – alle Fragen richtig beantwortet!'];
+  document.getElementById('scoreMsg').textContent = msgs[Math.min(Math.floor(pct/20),4)];
+
+  document.getElementById('revLabel').style.display='block';
+  const grid = document.getElementById('revGrid'); grid.innerHTML='';
+  scoredIDs.forEach(id => {
+    const d = document.createElement('div');
+    d.className='rev-item show';
+    const r = QA[id];
+    if (r) {
+      d.classList.add(r.correct?'rc':'rw');
+      d.innerHTML=`<div class="rev-q">${r.correct?'✓ ':'✗ '}${qLabels[id]}</div><div class="rev-a">${fmt(r.userAns)}</div>${!r.correct?`<div class="rev-correct">Richtig: ${qCorrect[id]}</div>`:''}`;
+    } else {
+      d.classList.add('rw');
+      d.innerHTML=`<div class="rev-q">– ${qLabels[id]}</div><div class="rev-a" style="opacity:0.4">Nicht beantwortet</div>`;
+    }
+    grid.appendChild(d);
+  });
+
+  const refs = document.getElementById('evalRefs'); refs.classList.add('show');
+  document.getElementById('er-gap').textContent = document.getElementById('r-gap')?.value?.trim() || '(nicht ausgefüllt)';
+  document.getElementById('er-frontier').textContent = document.getElementById('r-frontier')?.value?.trim() || '(nicht ausgefüllt)';
+  document.getElementById('er-step').textContent = document.getElementById('r-step')?.value?.trim() || '(nicht ausgefüllt)';
+}
+function fmt(a) { if(!a) return 'Keine Antwort'; if(typeof a==='string') return a; if(Array.isArray(a)) return a.join(', '); if(typeof a==='object') return Object.entries(a).map(([k,v])=>`${k}:${v}`).join(' / '); return String(a); }
+
+// ══════════════════════════════════
+//  PRESENTATION MODE
+// ══════════════════════════════════
+const slideNames = ['Titelfolie','Einleitung','Zeitstrahl','Adoptionslücke','Leitgedanken','Exkurs I · KI-Champion-Illusion','Exkurs II · AI-First Frontier University'];
+let slides=[], curSlide=0;
+
+function buildSlideNav() {
+  if (document.getElementById('slide-nav')) return;
+  const nav = document.createElement('div');
+  nav.id='slide-nav';
+  nav.innerHTML=`<button class="sn-btn" id="sn-prev" onclick="prevSlide()">&#8592;</button><div id="sn-mid"><div id="sn-dots"></div><span id="sn-title"></span></div><div style="display:flex;align-items:center;gap:12px;"><span id="sn-ctr"></span><button class="sn-btn" id="sn-next" onclick="nextSlide()">&#8594;</button></div>`;
+  document.body.appendChild(nav);
+}
+
+function updateNav() {
+  document.getElementById('sn-dots').innerHTML = slides.map((_,i)=>`<div class="sn-dot${i===curSlide?' active':''}" onclick="goToSlide(${i})"></div>`).join('');
+  document.getElementById('sn-title').textContent = slideNames[curSlide]||'';
+  document.getElementById('sn-ctr').textContent = `${curSlide+1} / ${slides.length}`;
+  document.getElementById('sn-prev').disabled = curSlide===0;
+  document.getElementById('sn-next').disabled = curSlide===slides.length-1;
+}
+
+function goToSlide(idx) {
+  slides.forEach((s,i) => { s.classList.remove('slide-active'); if(i===idx){s.classList.add('slide-active');s.scrollTop=0;} });
+  curSlide=idx; updateNav();
+}
+function prevSlide(){if(curSlide>0)goToSlide(curSlide-1);}
+function nextSlide(){if(curSlide<slides.length-1)goToSlide(curSlide+1);}
+
+function initSlides() {
+  slides = Array.from(document.querySelectorAll('[data-slide]')).sort((a,b)=>+a.dataset.slide-+b.dataset.slide);
+  buildSlideNav();
+  slides.forEach(s => { if(!s.querySelector('.pres-spacer')){const sp=document.createElement('div');sp.className='pres-spacer';s.appendChild(sp);} });
+  goToSlide(0);
+}
+
+function gearClick() { document.getElementById('gear-wrap').classList.toggle('open'); }
+
+function togglePres() {
+  const entering = !document.body.classList.contains('pres');
+  document.body.classList.toggle('pres');
+  const badge = document.getElementById('mode-badge');
+  if (entering) {
+    initSlides();
+    badge.style.display='none';
+    closeLb(); closeTlModal();
+  } else {
+    slides.forEach(s=>s.classList.remove('slide-active'));
+    badge.className='lernen';
+    badge.textContent='Lernmodus';
+    badge.style.display='block';
+  }
+}
+
+// Start in presentation mode by default
+document.addEventListener('DOMContentLoaded', () => { initSlides(); });
+
+// ── Keyboard
+document.addEventListener('keydown', e => {
+  const lbO = document.getElementById('lb').classList.contains('open');
+  const tlO = document.getElementById('tl-modal').classList.contains('open');
+  const inPres = document.body.classList.contains('pres');
+  const tag = document.activeElement.tagName;
+  if (e.key==='p'&&!e.ctrlKey&&!e.metaKey&&tag!=='INPUT'&&tag!=='TEXTAREA'){togglePres();return;}
+  if (lbO){if(e.key==='Escape')closeLb();if(e.key==='ArrowRight')lbNav(1);if(e.key==='ArrowLeft')lbNav(-1);return;}
+  if (tlO){if(e.key==='Escape')closeTlModal();if(e.key==='ArrowRight')tlModalNav(1);if(e.key==='ArrowLeft')tlModalNav(-1);return;}
+  if (inPres&&!lbO&&!tlO){if(e.key==='ArrowRight'||e.key==='ArrowDown')nextSlide();if(e.key==='ArrowLeft'||e.key==='ArrowUp')prevSlide();}
+});
+
+// ══════════════════════════════════
+//  TIMELINE MODAL
+// ══════════════════════════════════
+let tlmIdx=0;
+function openTlModal(idx){
+  tlmIdx=idx; const s=stages[idx];
+  document.getElementById('tlm-icon').textContent=s.icon;
+  const tag=document.getElementById('tlm-tag'); tag.textContent=`Stufe ${idx+1} von ${stages.length} · ${s.period}`; tag.style.color=s.color;
+  document.getElementById('tlm-title').textContent=s.title;
+  document.getElementById('tlm-period').textContent=s.sub;
+  document.getElementById('tlm-what').textContent=s.what;
+  document.getElementById('tlm-edu').textContent=s.edu;
+  document.getElementById('tlm-fact').textContent=s.fact;
+  document.getElementById('tlm-opps').innerHTML=s.opps.map(o=>`<li>${o}</li>`).join('');
+  document.getElementById('tlm-adopt-rows').innerHTML=s.adopt.map(a=>`<div class="tlm-arow"><span class="tlm-albl">${a.l}</span><div class="tlm-abg"><div class="tlm-afill" style="width:0%;background:${s.color};" data-t="${a.v}%"></div></div><span class="tlm-apct">${a.v} %</span></div>`).join('');
+  document.getElementById('tlm-card').style.borderTopColor=s.color;
+  document.getElementById('tlm-ctr').textContent=`${idx+1} / ${stages.length}`;
+  // Source line
+  const srcEl = document.getElementById('tlm-src');
+  if (srcEl) { srcEl.innerHTML = s.src ? s.src.split(' · ').map(t=>`<span class="ss"><em>${t}</em></span>`).join('') : ''; srcEl.style.display=s.src?'flex':'none'; }
+  document.getElementById('tl-modal').classList.add('open');
+  setTimeout(()=>document.querySelectorAll('.tlm-afill').forEach(b=>b.style.width=b.dataset.t),60);
+}
+function closeTlModal(){document.getElementById('tl-modal').classList.remove('open');}
+function tlModalNav(dir){openTlModal((tlmIdx+dir+stages.length)%stages.length);}
+
+// ══════════════════════════════════
+//  LIGHTBOX
+// ══════════════════════════════════
+let lbIdx=0;
+function openLb(idx){
+  lbIdx=idx; const o=opps[idx];
+  const tag=document.getElementById('lb-tag'); tag.textContent=o.tag; tag.style.color=o.accent;
+  document.getElementById('lb-title').textContent=o.title;
+  document.getElementById('lb-body').innerHTML=o.paras.map(p=>`<p>${p}</p>`).join('');
+  document.getElementById('lb-ctr').textContent=`${idx+1} / ${opps.length}`;
+  document.getElementById('lb').classList.add('open');
+}
+function closeLb(){document.getElementById('lb').classList.remove('open');}
+function lbNav(dir){openLb((lbIdx+dir+opps.length)%opps.length);}
+</script>
+</body>
+</html>
